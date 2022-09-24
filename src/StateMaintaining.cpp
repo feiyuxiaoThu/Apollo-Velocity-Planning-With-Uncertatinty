@@ -295,8 +295,8 @@ void DecisionMaking::SubVehicle::maintainStates() {
                     // 判断是否遵循交通规则
                     DecisionMaking::RSS::trafficRuleCheck(&(this->expected_state_), this->traffic_rule_obstacles_);
 
-                    // // 对期望状态进行动态速度规划
-                    // this->velocityPlanningForState(&(this->expected_state_), obstacles, false);
+                    // 对期望状态进行动态速度规划
+                    this->velocityPlanningForState(&(this->expected_state_), obstacles, false);
 
                     VelocityPlanning::VelocityPlanner* v_planner = new VelocityPlanning::VelocityPlanner(&(this->expected_state_), st_graph_interface_pub_);
                     v_planner->runOnce(obstacles);
@@ -443,7 +443,7 @@ void DecisionMaking::SubVehicle::maintainStates() {
                 // 如果到了，则进行速度规划
                 LOG(INFO) << "重新进行动态速度规划";
                 re_dynamic_motion_planning_count = 0;
-                // this->velocityPlanningForState(&(this->choosed_state_), obstacles, true);
+                this->velocityPlanningForState(&(this->choosed_state_), obstacles, true);
                 
                 VelocityPlanning::VelocityPlanner* v_planner = new VelocityPlanning::VelocityPlanner(&(this->choosed_state_), st_graph_interface_pub_);
                 v_planner->runOnce(obstacles);
@@ -502,7 +502,7 @@ void DecisionMaking::SubVehicle::maintainStates() {
                 if (!DecisionMaking::RSS::stateSafetyJudgement(this->choosed_state_, obstacles)) {
                     LOG(INFO) << "不安全状态需要重新规划";
                     // 当前状态不安全，则重新开始速度规划
-                    // this->velocityPlanningForState(&(this->choosed_state_), obstacles, true);
+                    this->velocityPlanningForState(&(this->choosed_state_), obstacles, true);
 
                     VelocityPlanning::VelocityPlanner* v_planner = new VelocityPlanning::VelocityPlanner(&(this->choosed_state_), st_graph_interface_pub_);
                     v_planner->runOnce(obstacles);
@@ -799,7 +799,7 @@ void DecisionMaking::SubVehicle::stopStateMaintain() {
                     DecisionMaking::RSS::trafficRuleCheck(&(this->expected_state_), this->traffic_rule_obstacles_);
 
                     // 对期望状态进行动态速度规划
-                    // this->velocityPlanningForState(&(this->expected_state_), obstacles, true);
+                    this->velocityPlanningForState(&(this->expected_state_), obstacles, true);
 
                     VelocityPlanning::VelocityPlanner* v_planner = new VelocityPlanning::VelocityPlanner(&(this->expected_state_), st_graph_interface_pub_);
                     v_planner->runOnce(obstacles);
@@ -1143,7 +1143,7 @@ void DecisionMaking::SubVehicle::avoidanceStateMaintain() {
                     DecisionMaking::RSS::trafficRuleCheck(&(this->expected_state_), this->traffic_rule_obstacles_);
 
                     // 对期望状态进行动态速度规划
-                    // this->velocityPlanningForState(&(this->expected_state_), obstacles, true);
+                    this->velocityPlanningForState(&(this->expected_state_), obstacles, true);
 
                     VelocityPlanning::VelocityPlanner* v_planner = new VelocityPlanning::VelocityPlanner(&(this->expected_state_), st_graph_interface_pub_);
                     v_planner->runOnce(obstacles);

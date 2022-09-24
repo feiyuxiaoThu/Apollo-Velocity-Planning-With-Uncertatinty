@@ -2,11 +2,14 @@ cmake_minimum_required(VERSION 2.8.3)
 project(motion_planning)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11 -Wall -O3)
-set(CMAKE_BUILD_TYPE "Release")
+add_compile_options(-std=c++11 -Wall -O0)
+set(CMAKE_BUILD_TYPE "Debug")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
+
+set(PIECEWISE_DIR third_party/modules/planning/math/piecewise_jerk)
+
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -36,7 +39,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Glog REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
 # find_package(/opt/ros/kinetic/include/opencv-3.3.1-dev)
-find_package(OsqpEigen)
+# find_package(OsqpEigen)
+find_package(osqp REQUIRED)
+find_package(gflags)
 
 
 
@@ -158,16 +163,21 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${GLOG_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
+  third_party
 
 )
 
-include_directories(/home/fjw/OOQP/OOQP/include)
-link_directories(/home/fjw/OOQP/OOQP/lib)
+# include_directories(/home/fjw/OOQP/OOQP/include)
+# link_directories(/home/fjw/OOQP/OOQP/lib)
+
+add_library(piecewise_jerk_problem ${PIECEWISE_DIR}/piecewise_jerk_problem.cc)
+add_library(piecewise_jerk_speed_problem ${PIECEWISE_DIR}/piecewise_jerk_speed_problem.cc)
+target_link_libraries(piecewise_jerk_speed_problem piecewise_jerk_problem glog osqp::osqp)
 
 add_executable(${PROJECT_NAME}_node src/MotionPlanningNode.cpp)
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}_lib src/Shape.cc src/GaussianDistribution.cc src/LookUpTable.cc src/VelocityOptimization.cc src/StGraph.cc src/MotionPlanning.cpp src/VelocityPlanning.cpp src/PathGenerator.cpp src/PathUtilities.cpp src/DecisionMaking src/StateMaintaining.cpp src/Tools.cpp src/Visualization.cpp src/SubVehicle.cpp src/ObstacleAndRSS.cpp src/MessageConverter.cpp src/SpecialMotionPlanning.cpp src/LowSpeedMotionPlanning.cpp src/ReverseMotionPlanning.cpp src/RotateMotionPlanning.cpp)
+add_library(${PROJECT_NAME}_lib src/PjsoInterface.cc src/Shape.cc src/GaussianDistribution.cc src/LookUpTable.cc src/VelocityOptimization.cc src/StGraph.cc src/MotionPlanning.cpp src/VelocityPlanning.cpp src/PathGenerator.cpp src/PathUtilities.cpp src/DecisionMaking src/StateMaintaining.cpp src/Tools.cpp src/Visualization.cpp src/SubVehicle.cpp src/ObstacleAndRSS.cpp src/MessageConverter.cpp src/SpecialMotionPlanning.cpp src/LowSpeedMotionPlanning.cpp src/ReverseMotionPlanning.cpp src/RotateMotionPlanning.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -196,7 +206,8 @@ target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
   glog
   ${OpenCV_LIBS}
-  OsqpEigen::OsqpEigen
+  piecewise_jerk_speed_problem
+  # OsqpEigen::OsqpEigen
 
   # obstacle_utilities
 )
@@ -206,14 +217,15 @@ target_link_libraries(${PROJECT_NAME}_node
   glog
   ${PROJECT_NAME}_lib
   ${OpenCV_LIBS}
-  OsqpEigen::OsqpEigen
-  ooqpgensparse 
-  ooqpsparse 
-  ooqpgondzio 
-  ooqpbase 
-  blas 
-  ma27 
-  gfortran
+  piecewise_jerk_speed_problem
+  # OsqpEigen::OsqpEigen
+  # ooqpgensparse 
+  # ooqpsparse 
+  # ooqpgondzio 
+  # ooqpbase 
+  # blas 
+  # ma27 
+  # gfortran
 
   # obstacle_utilities
 )

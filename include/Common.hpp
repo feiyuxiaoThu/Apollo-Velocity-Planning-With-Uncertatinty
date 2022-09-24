@@ -79,6 +79,7 @@
 #include "LookUpTable.hpp"
 #include "Shape.hpp"
 #include "GaussianDistribution.hpp"
+#include "PjsoInterface.hpp"
 
 
 // extern bool GLOBAL_IS_IN_GROUND_;

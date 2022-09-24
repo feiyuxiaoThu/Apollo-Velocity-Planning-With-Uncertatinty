@@ -44,9 +44,9 @@ void DecisionMaking::SubVehicle::checkStates() {
     // right_lane_velocity_planning_thread.join();
 
     // // debug不使用线程
-    // this->velocityPlanningForState(&(this->states_set_[StateNames::FORWARD]), obstacles, true);
-    // this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_LEFT]), obstacles, true);
-    // this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_RIGHT]), obstacles, true);
+    this->velocityPlanningForState(&(this->states_set_[StateNames::FORWARD]), obstacles, true);
+    this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_LEFT]), obstacles, true);
+    this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_RIGHT]), obstacles, true);
 
 
 
