@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-23 19:49:38
+ * @LastEditTime: 2022-09-24 11:28:00
  * @Description: velocity optimization.
  */
 
@@ -1361,15 +1361,15 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
         return false;
     }
 
-    // ~Stage II: safety enhancement
-    std::vector<std::vector<Cube2D<double>>> enhanced_cube_paths;
-    bool enhancement_success = st_graph_->enhanceSafety(cube_paths, &enhanced_cube_paths);
-    if (!enhancement_success) {
-        planning_state_->setSafety(false);
-        planning_state_->velocity_profile_generation_state_ = false;
-        std::cout << "State name: " << planning_state_->getStateName() << " is not safe due to safety enhancement failure." << std::endl;
-        return false;
-    }
+    // // ~Stage II: safety enhancement
+    // std::vector<std::vector<Cube2D<double>>> enhanced_cube_paths;
+    // bool enhancement_success = st_graph_->enhanceSafety(cube_paths, &enhanced_cube_paths);
+    // if (!enhancement_success) {
+    //     planning_state_->setSafety(false);
+    //     planning_state_->velocity_profile_generation_state_ = false;
+    //     std::cout << "State name: " << planning_state_->getStateName() << " is not safe due to safety enhancement failure." << std::endl;
+    //     return false;
+    // }
 
     // // DEBUG
     // st_graph_->visualization();
@@ -1387,7 +1387,7 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     printf("[VelocityPlanner] Velocity range: %lf - %lf, acceleration range: %lf - %lf.\n", planning_state_->getVelocityLimitationMax(), planning_state_->getVelocityLimitationMin(), planning_state_->getAccelerationLimitationMax(), planning_state_->getAccelerationLimitationMin());
 
     velocity_optimizer_ = new VelocityPlanning::VelocityOptimizer();
-    bool optimization_success = velocity_optimizer_->runOnce(enhanced_cube_paths, start_state_, last_s_range, planning_state_->getVelocityLimitationMax(), planning_state_->getVelocityLimitationMin(), planning_state_->getAccelerationLimitationMax(), planning_state_->getAccelerationLimitationMin(), &s, &t);
+    bool optimization_success = velocity_optimizer_->runOnce(cube_paths, start_state_, last_s_range, planning_state_->getVelocityLimitationMax(), planning_state_->getVelocityLimitationMin(), planning_state_->getAccelerationLimitationMax(), planning_state_->getAccelerationLimitationMin(), &s, &t);
 
     if (optimization_success) {
         // std::cout << "Velocity profile generation success." << std::endl;
@@ -1434,68 +1434,68 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     planning_state_->loadStProfile(std::get<0>(profile), std::get<1>(profile), std::get<2>(profile));
     planning_state_->velocity_profile_generation_state_ = true;
 
-    // ~Stage VI: publish information to python visualization interface
-    if (python_visualization_) {
-        // Initialize published msg
-        data_visualization_msg::StGraph st_graph_msg;
+    // // ~Stage VI: publish information to python visualization interface
+    // if (python_visualization_) {
+    //     // Initialize published msg
+    //     data_visualization_msg::StGraph st_graph_msg;
 
-        // Supply veliocity results
-        data_visualization_msg::VelocityInfo velocity_res_info_msg;
-        velocity_res_info_msg.s = std::get<0>(profile);
-        velocity_res_info_msg.v = std::get<1>(profile);
-        velocity_res_info_msg.a = std::get<2>(profile);
-        velocity_res_info_msg.t = std::get<3>(profile);
-        st_graph_msg.velocity_info = velocity_res_info_msg;
+    //     // Supply veliocity results
+    //     data_visualization_msg::VelocityInfo velocity_res_info_msg;
+    //     velocity_res_info_msg.s = std::get<0>(profile);
+    //     velocity_res_info_msg.v = std::get<1>(profile);
+    //     velocity_res_info_msg.a = std::get<2>(profile);
+    //     velocity_res_info_msg.t = std::get<3>(profile);
+    //     st_graph_msg.velocity_info = velocity_res_info_msg;
 
-        // Supply initial cubes paths
-        data_visualization_msg::CubesPaths initial_cubes_paths_msg;
-        for (int i = 0; i < cube_paths.size(); i++) {
-            data_visualization_msg::Cubes single_cubes_path_msg;
-            for (int j = 0; j < cube_paths[i].size(); j++) {
-                data_visualization_msg::Cube cube_msg;
-                cube_msg.t_start = cube_paths[i][j].t_start_;
-                cube_msg.t_end = cube_paths[i][j].t_end_;
-                cube_msg.s_start = cube_paths[i][j].s_start_;
-                cube_msg.s_end = cube_paths[i][j].s_end_;
-                single_cubes_path_msg.cubes.emplace_back(cube_msg);
-            }
-            initial_cubes_paths_msg.cubes_paths.emplace_back(single_cubes_path_msg);
-        }
-        st_graph_msg.initial_corridors = initial_cubes_paths_msg;
+    //     // Supply initial cubes paths
+    //     data_visualization_msg::CubesPaths initial_cubes_paths_msg;
+    //     for (int i = 0; i < cube_paths.size(); i++) {
+    //         data_visualization_msg::Cubes single_cubes_path_msg;
+    //         for (int j = 0; j < cube_paths[i].size(); j++) {
+    //             data_visualization_msg::Cube cube_msg;
+    //             cube_msg.t_start = cube_paths[i][j].t_start_;
+    //             cube_msg.t_end = cube_paths[i][j].t_end_;
+    //             cube_msg.s_start = cube_paths[i][j].s_start_;
+    //             cube_msg.s_end = cube_paths[i][j].s_end_;
+    //             single_cubes_path_msg.cubes.emplace_back(cube_msg);
+    //         }
+    //         initial_cubes_paths_msg.cubes_paths.emplace_back(single_cubes_path_msg);
+    //     }
+    //     st_graph_msg.initial_corridors = initial_cubes_paths_msg;
 
-        // Supply enhanced cubes paths
-        data_visualization_msg::CubesPaths enhanced_cubes_paths_msg;
-        for (int i = 0; i < enhanced_cube_paths.size(); i++) {
-            data_visualization_msg::Cubes single_cubes_path_msg;
-            for (int j = 0; j < enhanced_cube_paths[i].size(); j++) {
-                data_visualization_msg::Cube cube_msg;
-                cube_msg.t_start = enhanced_cube_paths[i][j].t_start_;
-                cube_msg.t_end = enhanced_cube_paths[i][j].t_end_;
-                cube_msg.s_start = enhanced_cube_paths[i][j].s_start_;
-                cube_msg.s_end = enhanced_cube_paths[i][j].s_end_;
-                single_cubes_path_msg.cubes.emplace_back(cube_msg);
-            }
-            enhanced_cubes_paths_msg.cubes_paths.emplace_back(single_cubes_path_msg);
-        }
-        st_graph_msg.enhanced_corridors = enhanced_cubes_paths_msg;
+    //     // Supply enhanced cubes paths
+    //     data_visualization_msg::CubesPaths enhanced_cubes_paths_msg;
+    //     for (int i = 0; i < enhanced_cube_paths.size(); i++) {
+    //         data_visualization_msg::Cubes single_cubes_path_msg;
+    //         for (int j = 0; j < enhanced_cube_paths[i].size(); j++) {
+    //             data_visualization_msg::Cube cube_msg;
+    //             cube_msg.t_start = enhanced_cube_paths[i][j].t_start_;
+    //             cube_msg.t_end = enhanced_cube_paths[i][j].t_end_;
+    //             cube_msg.s_start = enhanced_cube_paths[i][j].s_start_;
+    //             cube_msg.s_end = enhanced_cube_paths[i][j].s_end_;
+    //             single_cubes_path_msg.cubes.emplace_back(cube_msg);
+    //         }
+    //         enhanced_cubes_paths_msg.cubes_paths.emplace_back(single_cubes_path_msg);
+    //     }
+    //     st_graph_msg.enhanced_corridors = enhanced_cubes_paths_msg;
 
-        // Supply occupied parallelograms
-        for (const auto& uncer_occ_area : st_graph_->uncertainty_occupied_areas_) {
-            data_visualization_msg::Parallelogram cur_parallelogram_msg;
-            cur_parallelogram_msg.vertex.resize(4);
-            for (int i = 0; i < 4; i++) {
-                cur_parallelogram_msg.vertex[i].t = uncer_occ_area.vertex_[i](0);
-                cur_parallelogram_msg.vertex[i].s = uncer_occ_area.vertex_[i](1);
-            }
-            st_graph_msg.occupied_areas.emplace_back(cur_parallelogram_msg);
-        }
+    //     // Supply occupied parallelograms
+    //     for (const auto& uncer_occ_area : st_graph_->uncertainty_occupied_areas_) {
+    //         data_visualization_msg::Parallelogram cur_parallelogram_msg;
+    //         cur_parallelogram_msg.vertex.resize(4);
+    //         for (int i = 0; i < 4; i++) {
+    //             cur_parallelogram_msg.vertex[i].t = uncer_occ_area.vertex_[i](0);
+    //             cur_parallelogram_msg.vertex[i].s = uncer_occ_area.vertex_[i](1);
+    //         }
+    //         st_graph_msg.occupied_areas.emplace_back(cur_parallelogram_msg);
+    //     }
 
-        // Supply state name 
-        st_graph_msg.state_name = DIC_STATE_NAME[planning_state_->getStateName()];
+    //     // Supply state name 
+    //     st_graph_msg.state_name = DIC_STATE_NAME[planning_state_->getStateName()];
 
-        st_graph_publisher_.publish(st_graph_msg);
+    //     st_graph_publisher_.publish(st_graph_msg);
 
-    }
+    // }
 
 
     return true;
