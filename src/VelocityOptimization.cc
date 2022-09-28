@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-24 10:58:11
+ * @LastEditTime: 2022-09-28 14:00:59
  * @Description: velocity optimization.
  */
 
@@ -1306,7 +1306,7 @@ VelocityPlanner::VelocityPlanner(DecisionMaking::StandardState* current_state) {
 
         // Test limit the acceleration
         // Acceleration information from the IMU may include noise
-        vehicle_movement_state.acceleration_ *= 0.7;
+        // vehicle_movement_state.acceleration_ *= 0.7;
 
         start_state_ = {0.0, vehicle_movement_state.velocity_, vehicle_movement_state.acceleration_};
         // Construct s-t graph

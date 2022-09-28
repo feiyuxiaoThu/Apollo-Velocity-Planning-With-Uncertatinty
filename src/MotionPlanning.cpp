@@ -328,8 +328,8 @@ void DecisionMaking::SubVehicle::updateMapInformation() {
         // std::cout << "hgugugu" << std::endl;
 
         // 获取是否允许避障标志位
-        this->is_avoidance_capable_ = map_service.response.obstacle_avoidance_allowed;
-        // this->is_avoidance_capable_ = true;
+        // this->is_avoidance_capable_ = map_service.response.obstacle_avoidance_allowed;
+        this->is_avoidance_capable_ = true;
         // DEBUG
         // if (this->is_single_lane_) {
         //     this->is_avoidance_capable_ = false;
