@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-28 11:32:47
+ * @LastEditTime: 2022-10-06 17:51:17
  * @Description: velocity optimization.
  */
 
@@ -108,7 +108,7 @@ void OsqpOptimizationInterface::calculateConstraintsMatrix(const std::vector<dou
     /*
     @brief: @3: start state constraints
             @1: end s constraints
-            @unequal_constraints[0].size() - 1: holding the same description with OOQP, the last control point has 
+            @unequal_constraints[0].size() - 1: holding the same description with OOQP, the start control point has 
             no constraint. But there is still a placeholder, which will be ignored here
             @equal_constraints: the constraints for the continuity between two adjacent cubes
             @polynomial_unequal_constraints: the constraints for the limitation of velocity and acceleration
@@ -1383,11 +1383,18 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     // std::cout << "Max velocity: " << planning_state_->getVelocityLimitationMax() << ", min velocity: " << planning_state_->getVelocityLimitationMin() << std::endl;
     // std::cout << "Max acceleration: " << planning_state_->getAccelerationLimitationMax() << ", min acceleration: " << planning_state_->getAccelerationLimitationMin() << std::endl;
 
+    double max_speed = planning_state_->getVelocityLimitationMax();
+    double min_speed = planning_state_->getVelocityLimitationMin();
+    double max_acc = planning_state_->getAccelerationLimitationMax();
+    double min_acc = planning_state_->getAccelerationLimitationMin();
+
+    min_speed = 0.0;
+
     printf("[VelocityPlanner] Planned state name: %s.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
-    printf("[VelocityPlanner] Velocity range: %lf - %lf, acceleration range: %lf - %lf.\n", planning_state_->getVelocityLimitationMax(), planning_state_->getVelocityLimitationMin(), planning_state_->getAccelerationLimitationMax(), planning_state_->getAccelerationLimitationMin());
+    printf("[VelocityPlanner] Velocity range: %lf - %lf, acceleration range: %lf - %lf.\n", max_speed, min_speed, max_acc, min_acc);
 
     velocity_optimizer_ = new VelocityPlanning::VelocityOptimizer();
-    bool optimization_success = velocity_optimizer_->runOnce(cube_paths, start_state_, last_s_range, planning_state_->getVelocityLimitationMax(), planning_state_->getVelocityLimitationMin(), planning_state_->getAccelerationLimitationMax(), planning_state_->getAccelerationLimitationMin(), &s, &t);
+    bool optimization_success = velocity_optimizer_->runOnce(cube_paths, start_state_, last_s_range, max_speed, min_speed, max_acc, min_acc, &s, &t);
 
     if (optimization_success) {
         // std::cout << "Velocity profile generation success." << std::endl;

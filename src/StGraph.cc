@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-30 10:00:20
+ * @LastEditTime: 2022-10-06 17:49:15
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -102,7 +102,7 @@ bool GridMap2D::expandSingleColumn(const int& grid_t_start, const int& grid_t_en
         if (collision_type == ValType::OCCUPIED) {
             // Complete the last round
             if (cur_s_grid > cur_s_start) {
-                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start, cur_s_grid);
+                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start - 1, cur_s_grid);
                 cube.upper_collision_type_ = CollisionType::ACCELERATION_BOUNDARY;
                 if (calculated_cubes.empty()) {
                     cube.lower_collision_type_ = CollisionType::ACCELERATION_BOUNDARY;
@@ -115,7 +115,7 @@ bool GridMap2D::expandSingleColumn(const int& grid_t_start, const int& grid_t_en
         } else if (collision_type == ValType::HALF_OCCUPIED) {
             // Complete the medium round
             if (cur_s_grid > cur_s_start) {
-                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start, cur_s_grid);
+                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start - 1, cur_s_grid);
                 cube.upper_collision_type_ = CollisionType::OBSTACLE_BOUNDARY;
                 if (calculated_cubes.empty()) {
                     cube.lower_collision_type_ = CollisionType::ACCELERATION_BOUNDARY;
