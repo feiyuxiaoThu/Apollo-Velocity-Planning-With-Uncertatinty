@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-29 20:14:38
+ * @LastEditTime: 2022-10-06 10:54:37
  * @Description: velocity optimization.
  */
 
@@ -108,7 +108,7 @@ void OsqpOptimizationInterface::calculateConstraintsMatrix(const std::vector<dou
     /*
     @brief: @3: start state constraints
             @1: end s constraints
-            @unequal_constraints[0].size() - 1: holding the same description with OOQP, the last control point has 
+            @unequal_constraints[0].size() - 1: holding the same description with OOQP, the start control point has 
             no constraint. But there is still a placeholder, which will be ignored here
             @equal_constraints: the constraints for the continuity between two adjacent cubes
             @polynomial_unequal_constraints: the constraints for the limitation of velocity and acceleration
