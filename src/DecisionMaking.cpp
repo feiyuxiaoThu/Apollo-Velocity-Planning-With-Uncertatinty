@@ -152,15 +152,15 @@ void DecisionMaking::SubVehicle::checkStates() {
         this->states_set_[StateNames::TURN_RIGHT].disable();
     }
 
-    // 判断状态是否为上一个状态的邻居，如果不是，也设置为不可行
-    if (!(this->current_state_.getStateName() == StateNames::TURN_RIGHT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_RIGHT))) {
-        LOG(INFO) << "不是当前状态的邻居，拒绝右换道";
-        this->states_set_[StateNames::TURN_RIGHT].disable();
-    }
-    if (!(this->current_state_.getStateName() == StateNames::TURN_LEFT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_LEFT))) {
-        LOG(INFO) << "不是当前状态的邻居，拒绝左换道";
-        this->states_set_[StateNames::TURN_LEFT].disable();
-    }
+    // // 判断状态是否为上一个状态的邻居，如果不是，也设置为不可行
+    // if (!(this->current_state_.getStateName() == StateNames::TURN_RIGHT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_RIGHT))) {
+    //     LOG(INFO) << "不是当前状态的邻居，拒绝右换道";
+    //     this->states_set_[StateNames::TURN_RIGHT].disable();
+    // }
+    // if (!(this->current_state_.getStateName() == StateNames::TURN_LEFT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_LEFT))) {
+    //     LOG(INFO) << "不是当前状态的邻居，拒绝左换道";
+    //     this->states_set_[StateNames::TURN_LEFT].disable();
+    // }
 
     std::cout << "VELOCITY PLANNING COMPLETE" << std::endl;
     std::cout << "forward state capability is " << this->states_set_[StateNames::FORWARD].getCapability() << ", and safety is " << this->states_set_[StateNames::FORWARD].getSafety() << ", and priority is " << this->states_set_[StateNames::FORWARD].getPriority() << std::endl;
@@ -182,32 +182,33 @@ void DecisionMaking::SubVehicle::chooseStates() {
     // 判断是否需要进行超车，如果需要进行超车，重新根据期望加速度更新权重
     if (this->IS_OVERTAKE_ENABLE_FLAG_) {
         if (this->states_set_[StateNames::FORWARD].getCapability() && this->states_set_[StateNames::FORWARD].getSafety()) {
-            bool is_forward_decceleration;
-            if (Tools::isSmall(this->states_set_[StateNames::FORWARD].getStateMaxAvailableAcceleration(), STATE_CHOOSING_ACCELERATION_THRESHOLD)) {
-                is_forward_decceleration = true;
-            } else {
-                is_forward_decceleration = false;
-            }
+            // bool is_forward_decceleration;
+            // if (Tools::isSmall(this->states_set_[StateNames::FORWARD].getStateMaxAvailableAcceleration(), STATE_CHOOSING_ACCELERATION_THRESHOLD)) {
+            //     is_forward_decceleration = true;
+            // } else {
+            //     is_forward_decceleration = false;
+            // }
             
             // 确定优先级增加量
             if ((this->is_length_enough_ || (this->guidance_type_ != Lane::GuidanceType::CHANGE_LEFT && this->guidance_type_ != Lane::GuidanceType::CHANGE_RIGHT))) {
-                double priority_offset;
-                if (!is_forward_decceleration) {
-                    // 加速不阻碍
-                    priority_offset = PRIORITY_INCREMENT_VALUE;
-                } else {
-                    // 加速被阻碍
-                    priority_offset = this->states_set_[StateNames::FORWARD].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::FORWARD].getExpectedVelocityCurrent() * PRIORITY_INCREMENT_VALUE;
-                    // 判断状态对应道路是否被占据
-                    if (!this->states_set_[StateNames::FORWARD].getLaneBeingOccupiedByObstacle()) {
-                        // 没被占据,优先级上升
-                        priority_offset += (1 - this->states_set_[StateNames::FORWARD].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::FORWARD].getExpectedVelocityCurrent()) * PRIORITY_INCREMENT_VALUE;
-                        LOG(INFO) << "中间道路咩有被障碍物占据";
-                    }
-                }
+                // if (!is_forward_decceleration) {
+                //     // 加速不阻碍
+                //     priority_offset = PRIORITY_INCREMENT_VALUE;
+                // } else {
+                //     // 加速被阻碍
+                //     priority_offset = this->states_set_[StateNames::FORWARD].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::FORWARD].getExpectedVelocityCurrent() * PRIORITY_INCREMENT_VALUE;
+                //     // 判断状态对应道路是否被占据
+                //     if (!this->states_set_[StateNames::FORWARD].getLaneBeingOccupiedByObstacle()) {
+                //         // 没被占据,优先级上升
+                //         priority_offset += (1 - this->states_set_[StateNames::FORWARD].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::FORWARD].getExpectedVelocityCurrent()) * PRIORITY_INCREMENT_VALUE;
+                //         LOG(INFO) << "中间道路咩有被障碍物占据";
+                //     }
+                // }
+
+                double new_priority = states_set_[StateNames::FORWARD].s_.back();
                 
-                LOG(INFO) << "中间道路优先级进行调整，原来为" << this->states_set_[StateNames::FORWARD].getPriority() << "增量为" << priority_offset;
-                this->states_set_[StateNames::FORWARD].setPriority(this->states_set_[StateNames::FORWARD].getPriority() + priority_offset);
+                // LOG(INFO) << "中间道路优先级进行调整，原来为" << this->states_set_[StateNames::FORWARD].getPriority() << "增量为" << new_priority;
+                this->states_set_[StateNames::FORWARD].setPriority(new_priority + 5.0);
             }
             // // 加速度偏移量
             // double acceleration_priority_offset = this->states_set_[StateNames::FORWARD].getVehicleDynamicPlanningExpectedAcceleration() * 40.0;
@@ -217,29 +218,30 @@ void DecisionMaking::SubVehicle::chooseStates() {
     }
     if (this->IS_OVERTAKE_ENABLE_FLAG_) {
         if (this->states_set_[StateNames::TURN_LEFT].getCapability() && this->states_set_[StateNames::TURN_LEFT].getSafety()) {
-            bool is_turn_left_decceleration;
-            if (Tools::isSmall(this->states_set_[StateNames::TURN_LEFT].getStateMaxAvailableAcceleration(), STATE_CHOOSING_ACCELERATION_THRESHOLD)) {
-                is_turn_left_decceleration = true;
-            } else {
-                is_turn_left_decceleration = false;
-            }        
+            // bool is_turn_left_decceleration;
+            // if (Tools::isSmall(this->states_set_[StateNames::TURN_LEFT].getStateMaxAvailableAcceleration(), STATE_CHOOSING_ACCELERATION_THRESHOLD)) {
+            //     is_turn_left_decceleration = true;
+            // } else {
+            //     is_turn_left_decceleration = false;
+            // }        
             // 确定优先级增加量
             if ((this->is_length_enough_ || (this->guidance_type_ == Lane::GuidanceType::CHANGE_LEFT || this->guidance_type_ == Lane::GuidanceType::CENTER_LEFT || this->guidance_type_ == Lane::GuidanceType::ALL_AVAILABLE))) {
-                double priority_offset;
-                if (!is_turn_left_decceleration) {
-                    priority_offset = PRIORITY_INCREMENT_VALUE;
-                } else {
-                    priority_offset = this->states_set_[StateNames::TURN_LEFT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_LEFT].getExpectedVelocityCurrent() * PRIORITY_INCREMENT_VALUE;
-                    // 判断状态对应道路是否被占据
-                    if (!this->states_set_[StateNames::TURN_LEFT].getLaneBeingOccupiedByObstacle()) {
-                        // 没被占据,优先级上升
-                        priority_offset += (1 - this->states_set_[StateNames::TURN_LEFT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_LEFT].getExpectedVelocityCurrent()) * PRIORITY_INCREMENT_VALUE;
-                        LOG(INFO) << "左侧道路咩有被障碍物占据";
-                    }
-                }
+                // double priority_offset;
+                // if (!is_turn_left_decceleration) {
+                //     priority_offset = PRIORITY_INCREMENT_VALUE;
+                // } else {
+                //     priority_offset = this->states_set_[StateNames::TURN_LEFT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_LEFT].getExpectedVelocityCurrent() * PRIORITY_INCREMENT_VALUE;
+                //     // 判断状态对应道路是否被占据
+                //     if (!this->states_set_[StateNames::TURN_LEFT].getLaneBeingOccupiedByObstacle()) {
+                //         // 没被占据,优先级上升
+                //         priority_offset += (1 - this->states_set_[StateNames::TURN_LEFT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_LEFT].getExpectedVelocityCurrent()) * PRIORITY_INCREMENT_VALUE;
+                //         LOG(INFO) << "左侧道路咩有被障碍物占据";
+                //     }
+                // }
                  
-                LOG(INFO) << "左侧道路优先级进行调整，原来为" << this->states_set_[StateNames::TURN_LEFT].getPriority() << "增量为" << priority_offset;
-                this->states_set_[StateNames::TURN_LEFT].setPriority(this->states_set_[StateNames::TURN_LEFT].getPriority() + priority_offset);
+                // LOG(INFO) << "左侧道路优先级进行调整，原来为" << this->states_set_[StateNames::TURN_LEFT].getPriority() << "增量为" << priority_offset;
+                double new_priority = states_set_[StateNames::TURN_LEFT].s_.back();
+                this->states_set_[StateNames::TURN_LEFT].setPriority(new_priority);
             }
             // // 加速度偏移量
             // double acceleration_priority_offset = this->states_set_[StateNames::TURN_LEFT].getVehicleDynamicPlanningExpectedAcceleration() * 40.0;
@@ -249,29 +251,31 @@ void DecisionMaking::SubVehicle::chooseStates() {
     }
     if (this->IS_OVERTAKE_ENABLE_FLAG_) {
         if (this->states_set_[StateNames::TURN_RIGHT].getCapability() && this->states_set_[StateNames::TURN_RIGHT].getSafety()) {
-            bool is_turn_right_decceleration;
-            if (Tools::isSmall(this->states_set_[StateNames::TURN_RIGHT].getStateMaxAvailableAcceleration(), STATE_CHOOSING_ACCELERATION_THRESHOLD)) {
-                is_turn_right_decceleration = true;
-            } else {
-                is_turn_right_decceleration = false;
-            }          
+            // bool is_turn_right_decceleration;
+            // if (Tools::isSmall(this->states_set_[StateNames::TURN_RIGHT].getStateMaxAvailableAcceleration(), STATE_CHOOSING_ACCELERATION_THRESHOLD)) {
+            //     is_turn_right_decceleration = true;
+            // } else {
+            //     is_turn_right_decceleration = false;
+            // }          
             // 确定优先级增加量
             if ((this->is_length_enough_ || this->guidance_type_ == Lane::GuidanceType::CHANGE_RIGHT || this->guidance_type_ == Lane::GuidanceType::CENTER_RIGHT || this->guidance_type_ == Lane::GuidanceType::ALL_AVAILABLE)) {
-                double priority_offset;
-                if (!is_turn_right_decceleration) {
-                    priority_offset = PRIORITY_INCREMENT_VALUE_LOWER;
-                } else {
-                    priority_offset = this->states_set_[StateNames::TURN_RIGHT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_RIGHT].getExpectedVelocityCurrent() * PRIORITY_INCREMENT_VALUE_LOWER;
-                    // 判断状态对应道路是否被占据
-                    if (!this->states_set_[StateNames::TURN_RIGHT].getLaneBeingOccupiedByObstacle()) {
-                        // 没被占据,优先级上升
-                        priority_offset += (1 - this->states_set_[StateNames::TURN_RIGHT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_RIGHT].getExpectedVelocityCurrent()) * PRIORITY_INCREMENT_VALUE;
-                        LOG(INFO) << "右侧道路咩有被障碍物占据";
-                    }
-                }
+                // double priority_offset;
+                // if (!is_turn_right_decceleration) {
+                //     priority_offset = PRIORITY_INCREMENT_VALUE_LOWER;
+                // } else {
+                //     priority_offset = this->states_set_[StateNames::TURN_RIGHT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_RIGHT].getExpectedVelocityCurrent() * PRIORITY_INCREMENT_VALUE_LOWER;
+                //     // 判断状态对应道路是否被占据
+                //     if (!this->states_set_[StateNames::TURN_RIGHT].getLaneBeingOccupiedByObstacle()) {
+                //         // 没被占据,优先级上升
+                //         priority_offset += (1 - this->states_set_[StateNames::TURN_RIGHT].getVehicleCurrentMovement().velocity_ / this->states_set_[StateNames::TURN_RIGHT].getExpectedVelocityCurrent()) * PRIORITY_INCREMENT_VALUE;
+                //         LOG(INFO) << "右侧道路咩有被障碍物占据";
+                //     }
+                // }
+
+                double new_priority = states_set_[StateNames::TURN_RIGHT].s_.back();
                 
-                LOG(INFO) << "右侧道路优先级进行调整，原来为" << this->states_set_[StateNames::TURN_RIGHT].getPriority() << "增量为" << priority_offset;
-                this->states_set_[StateNames::TURN_RIGHT].setPriority(this->states_set_[StateNames::TURN_RIGHT].getPriority() + priority_offset);
+                // LOG(INFO) << "右侧道路优先级进行调整，原来为" << this->states_set_[StateNames::TURN_RIGHT].getPriority() << "增量为" << priority_offset;
+                this->states_set_[StateNames::TURN_RIGHT].setPriority(new_priority);
             }
             // // 加速度偏移量
             // double acceleration_priority_offset = this->states_set_[StateNames::TURN_RIGHT].getVehicleDynamicPlanningExpectedAcceleration() * 40.0;
@@ -279,6 +283,11 @@ void DecisionMaking::SubVehicle::chooseStates() {
             // LOG(INFO) << "右侧道最终优先级为" << acceleration_priority_offset;
         }
     }
+
+    std::cout << "OVERTAKE PARAMETERS CHANGED" << std::endl;
+    std::cout << "forward state capability is " << this->states_set_[StateNames::FORWARD].getCapability() << ", and safety is " << this->states_set_[StateNames::FORWARD].getSafety() << ", and priority is " << this->states_set_[StateNames::FORWARD].getPriority() << std::endl;
+    std::cout << "left state capability is " << this->states_set_[StateNames::TURN_LEFT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_LEFT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_LEFT].getPriority() << std::endl;
+    std::cout << "right state capability is " << this->states_set_[StateNames::TURN_RIGHT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_RIGHT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_RIGHT].getPriority() << std::endl;
 
     // 构建可选状态列表，包含三大状态
     std::vector<DecisionMaking::StandardState> availiable_states_set;
