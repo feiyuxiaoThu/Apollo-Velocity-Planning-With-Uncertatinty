@@ -152,15 +152,15 @@ void DecisionMaking::SubVehicle::checkStates() {
         this->states_set_[StateNames::TURN_RIGHT].disable();
     }
 
-    // 判断状态是否为上一个状态的邻居，如果不是，也设置为不可行
-    if (!(this->current_state_.getStateName() == StateNames::TURN_RIGHT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_RIGHT))) {
-        LOG(INFO) << "不是当前状态的邻居，拒绝右换道";
-        this->states_set_[StateNames::TURN_RIGHT].disable();
-    }
-    if (!(this->current_state_.getStateName() == StateNames::TURN_LEFT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_LEFT))) {
-        LOG(INFO) << "不是当前状态的邻居，拒绝左换道";
-        this->states_set_[StateNames::TURN_LEFT].disable();
-    }
+    // // 判断状态是否为上一个状态的邻居，如果不是，也设置为不可行
+    // if (!(this->current_state_.getStateName() == StateNames::TURN_RIGHT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_RIGHT))) {
+    //     LOG(INFO) << "不是当前状态的邻居，拒绝右换道";
+    //     this->states_set_[StateNames::TURN_RIGHT].disable();
+    // }
+    // if (!(this->current_state_.getStateName() == StateNames::TURN_LEFT || Tools::searchNeighborStates(this->current_state_.getNeighborStates(), StateNames::TURN_LEFT))) {
+    //     LOG(INFO) << "不是当前状态的邻居，拒绝左换道";
+    //     this->states_set_[StateNames::TURN_LEFT].disable();
+    // }
 
     std::cout << "VELOCITY PLANNING COMPLETE" << std::endl;
     std::cout << "forward state capability is " << this->states_set_[StateNames::FORWARD].getCapability() << ", and safety is " << this->states_set_[StateNames::FORWARD].getSafety() << ", and priority is " << this->states_set_[StateNames::FORWARD].getPriority() << std::endl;
