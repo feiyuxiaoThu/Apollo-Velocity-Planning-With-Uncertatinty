@@ -161,8 +161,8 @@ include_directories(
 
 )
 
-include_directories(/home/fjw/OOQP/OOQP/include)
-link_directories(/home/fjw/OOQP/OOQP/lib)
+# include_directories(/home/fjw/OOQP/OOQP/include)
+# link_directories(/home/fjw/OOQP/OOQP/lib)
 
 add_executable(${PROJECT_NAME}_node src/MotionPlanningNode.cpp)
 
@@ -207,13 +207,13 @@ target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}_lib
   ${OpenCV_LIBS}
   OsqpEigen::OsqpEigen
-  ooqpgensparse 
-  ooqpsparse 
-  ooqpgondzio 
-  ooqpbase 
-  blas 
-  ma27 
-  gfortran
+  # ooqpgensparse 
+  # ooqpsparse 
+  # ooqpgondzio 
+  # ooqpbase 
+  # blas 
+  # ma27 
+  # gfortran
 
   # obstacle_utilities
 )

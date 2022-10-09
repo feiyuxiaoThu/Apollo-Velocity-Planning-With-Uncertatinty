@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-06 11:01:42
+ * @LastEditTime: 2022-10-09 14:09:14
  * @Description: velocity optimization.
  */
 
@@ -185,508 +185,508 @@ void OsqpOptimizationInterface::calculateConstraintsMatrix(const std::vector<dou
     upper_bounds = upper_bounds_vec;
 }
 
-OoqpOptimizationInterface::OoqpOptimizationInterface() = default;
-OoqpOptimizationInterface::~OoqpOptimizationInterface() = default;
+// OoqpOptimizationInterface::OoqpOptimizationInterface() = default;
+// OoqpOptimizationInterface::~OoqpOptimizationInterface() = default;
 
-/**
- * @brief load data
- * @param ref_stamps time stamps of the point in in the intersection of two cubes
- * @param start_constraints start points' constraints
- * @param end_constraints end points' constraints
- * @param unequal_constraints position limit of each point
- * @param equal_constraints ensure the continuity of the connections between each two cubes
- */    
-void OoqpOptimizationInterface::load(const std::vector<double>& ref_stamps, const std::array<double, 3>& start_constraints, const double& end_s_constraint, std::array<std::vector<double>, 2>& unequal_constraints, std::vector<std::vector<double>>& equal_constraints, std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>>& polymonial_unequal_constraints) {
+// /**
+//  * @brief load data
+//  * @param ref_stamps time stamps of the point in in the intersection of two cubes
+//  * @param start_constraints start points' constraints
+//  * @param end_constraints end points' constraints
+//  * @param unequal_constraints position limit of each point
+//  * @param equal_constraints ensure the continuity of the connections between each two cubes
+//  */    
+// void OoqpOptimizationInterface::load(const std::vector<double>& ref_stamps, const std::array<double, 3>& start_constraints, const double& end_s_constraint, std::array<std::vector<double>, 2>& unequal_constraints, std::vector<std::vector<double>>& equal_constraints, std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>>& polymonial_unequal_constraints) {
 
-    // // DEBUG
-    // std::cout << "start velocity: " << start_constraints[1] << std::endl;
-    // // END DEBUG
+//     // // DEBUG
+//     // std::cout << "start velocity: " << start_constraints[1] << std::endl;
+//     // // END DEBUG
 
-    ref_stamps_ = ref_stamps;
-    start_constraints_ = start_constraints;
-    end_s_constraint_ = end_s_constraint;
-    unequal_constraints_ = unequal_constraints;
-    equal_constraints_ = equal_constraints;
-    polymonial_unequal_constraints_ = polymonial_unequal_constraints;
+//     ref_stamps_ = ref_stamps;
+//     start_constraints_ = start_constraints;
+//     end_s_constraint_ = end_s_constraint;
+//     unequal_constraints_ = unequal_constraints;
+//     equal_constraints_ = equal_constraints;
+//     polymonial_unequal_constraints_ = polymonial_unequal_constraints;
 
-    // // DEBUG
-    // std::cout << "Load successful" << std::endl;
-    // // END DEBUG
-}
+//     // // DEBUG
+//     // std::cout << "Load successful" << std::endl;
+//     // // END DEBUG
+// }
 
-/**
- * @brief Run optimization
- * @param {*}
- * @return {*}
- */    
-bool OoqpOptimizationInterface::runOnce(std::vector<double>* optimized_s, double* objective_value) {
+// /**
+//  * @brief Run optimization
+//  * @param {*}
+//  * @return {*}
+//  */    
+// bool OoqpOptimizationInterface::runOnce(std::vector<double>* optimized_s, double* objective_value) {
 
-    // // Multi thread calculation
-    // // TODO: add logic to handle the situation where the optimization process is failed
-    // clock_t single_dim_optimization_start_time = clock();
-    // std::thread s_thread(&OoqpOptimizationInterface::optimizeSingleDim, this, s_start_constraints, s_end_constraints, s_unequal_constraints[0], s_unequal_constraints[1], "s");
-    // std::thread d_thread(&OoqpOptimizationInterface::optimizeSingleDim, this, d_start_constraints, d_end_constraints, d_unequal_constraints[0], d_unequal_constraints[1], "d");
-    // s_thread.join();
-    // d_thread.join();
-    // clock_t single_dim_optimization_end_time = clock();
+//     // // Multi thread calculation
+//     // // TODO: add logic to handle the situation where the optimization process is failed
+//     // clock_t single_dim_optimization_start_time = clock();
+//     // std::thread s_thread(&OoqpOptimizationInterface::optimizeSingleDim, this, s_start_constraints, s_end_constraints, s_unequal_constraints[0], s_unequal_constraints[1], "s");
+//     // std::thread d_thread(&OoqpOptimizationInterface::optimizeSingleDim, this, d_start_constraints, d_end_constraints, d_unequal_constraints[0], d_unequal_constraints[1], "d");
+//     // s_thread.join();
+//     // d_thread.join();
+//     // clock_t single_dim_optimization_end_time = clock();
 
 
-    optimizeSingleDim(start_constraints_, end_s_constraint_, unequal_constraints_[0], unequal_constraints_[1]);
+//     optimizeSingleDim(start_constraints_, end_s_constraint_, unequal_constraints_[0], unequal_constraints_[1]);
     
-    *optimized_s = optimized_data_;
-    *objective_value = objective_value_;
-    return optimization_res_;
-}
+//     *optimized_s = optimized_data_;
+//     *objective_value = objective_value_;
+//     return optimization_res_;
+// }
 
-/**
- * @brief Optimize in single dimension
- * @param {*}
- */
-void OoqpOptimizationInterface::optimizeSingleDim(const std::array<double, 3>& single_start_constraints, const double& end_s_constraint, const std::vector<double>& single_lower_boundaries, const std::vector<double>& single_upper_boundaries) {
-    // ~Stage I: calculate objective function Q and c
-    Eigen::SparseMatrix<double, Eigen::RowMajor> Q;
-    Eigen::VectorXd c;
-    calculateQcMatrix(Q, c);
+// /**
+//  * @brief Optimize in single dimension
+//  * @param {*}
+//  */
+// void OoqpOptimizationInterface::optimizeSingleDim(const std::array<double, 3>& single_start_constraints, const double& end_s_constraint, const std::vector<double>& single_lower_boundaries, const std::vector<double>& single_upper_boundaries) {
+//     // ~Stage I: calculate objective function Q and c
+//     Eigen::SparseMatrix<double, Eigen::RowMajor> Q;
+//     Eigen::VectorXd c;
+//     calculateQcMatrix(Q, c);
 
-    // // DEBUG 
-    // std::cout << "Q: " << Q << std::endl;
-    // std::cout << "c: " << c << std::endl; 
-    // // END DEBUG
+//     // // DEBUG 
+//     // std::cout << "Q: " << Q << std::endl;
+//     // std::cout << "c: " << c << std::endl; 
+//     // // END DEBUG
 
-    // ~Stage II: calculate equal constraints, includes start point constraints, end point constraints and continuity constraints
-    Eigen::SparseMatrix<double, Eigen::RowMajor> A;
-    Eigen::VectorXd b;
-    calculateAbMatrix(single_start_constraints, end_s_constraint, equal_constraints_, A, b);
+//     // ~Stage II: calculate equal constraints, includes start point constraints, end point constraints and continuity constraints
+//     Eigen::SparseMatrix<double, Eigen::RowMajor> A;
+//     Eigen::VectorXd b;
+//     calculateAbMatrix(single_start_constraints, end_s_constraint, equal_constraints_, A, b);
 
-    // // DEBUG
-    // std::cout << "A: " << A << std::endl;
-    // std::cout << "b: " << b << std::endl;
-    // // END DEBUG
+//     // // DEBUG
+//     // std::cout << "A: " << A << std::endl;
+//     // std::cout << "b: " << b << std::endl;
+//     // // END DEBUG
 
-    // ~Stage III: calculate low and up boundaries for intermediate points
-    Eigen::Matrix<char, Eigen::Dynamic, 1> useLowerLimitForX;
-    Eigen::Matrix<char, Eigen::Dynamic, 1> useUpperLimitForX;
-    Eigen::VectorXd lowerLimitForX;
-    Eigen::VectorXd upperLimitForX;
-    calculateBoundariesForIntermediatePoints(single_lower_boundaries, single_upper_boundaries, useLowerLimitForX, useUpperLimitForX, lowerLimitForX, upperLimitForX);
+//     // ~Stage III: calculate low and up boundaries for intermediate points
+//     Eigen::Matrix<char, Eigen::Dynamic, 1> useLowerLimitForX;
+//     Eigen::Matrix<char, Eigen::Dynamic, 1> useUpperLimitForX;
+//     Eigen::VectorXd lowerLimitForX;
+//     Eigen::VectorXd upperLimitForX;
+//     calculateBoundariesForIntermediatePoints(single_lower_boundaries, single_upper_boundaries, useLowerLimitForX, useUpperLimitForX, lowerLimitForX, upperLimitForX);
 
-    // // DEBUG
-    // std::cout << "lowerLimitForX: " << lowerLimitForX << std::endl;
-    // std::cout << "upperLimitForX: " << upperLimitForX << std::endl;
-    // for (int i = 0; i < useLowerLimitForX.rows(); i++) {
-    //     printf("%d\n", useLowerLimitForX(i, 0));
-    //     printf("%d\n", useUpperLimitForX(i, 0));
-    // }
-    // std::cout << "------------------" << std::endl;
-    // // END DEBUG
+//     // // DEBUG
+//     // std::cout << "lowerLimitForX: " << lowerLimitForX << std::endl;
+//     // std::cout << "upperLimitForX: " << upperLimitForX << std::endl;
+//     // for (int i = 0; i < useLowerLimitForX.rows(); i++) {
+//     //     printf("%d\n", useLowerLimitForX(i, 0));
+//     //     printf("%d\n", useUpperLimitForX(i, 0));
+//     // }
+//     // std::cout << "------------------" << std::endl;
+//     // // END DEBUG
 
-    // // DEBUG
-    // std::cout << "prepare success" << std::endl;
-    // // END DBEUG
+//     // // DEBUG
+//     // std::cout << "prepare success" << std::endl;
+//     // // END DBEUG
 
-    // ~Stage IV: calculate polymonial unequal constraints
-    Eigen::SparseMatrix<double, Eigen::RowMajor> C;
-    Eigen::VectorXd d;
-    Eigen::VectorXd f;
-    calculateCdfMatrix(C, d, f);
-
-
-
-    // ~Stage V: optimization
-    std::vector<double> optimized_values;
-    double objective_value = 0.0;
-    bool optimization_status = solve(Q, c, A, b, C, d, f, useLowerLimitForX, useUpperLimitForX, lowerLimitForX, upperLimitForX, &optimized_values, &objective_value);
-
-    // ~Stage VI: store information
-    optimized_data_ = optimized_values;
-    optimization_res_ = optimization_status;
-    objective_value_ = objective_value;
-}
-
-/**
- * @brief calculate objective function
- * @param {*}
- * @return {*}
- */    
-void OoqpOptimizationInterface::calculateQcMatrix(Eigen::SparseMatrix<double, Eigen::RowMajor>& Q, Eigen::VectorXd& c) {
-    // Initialize Q matrix
-    int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
-    Eigen::MatrixXd Q_matrix = Eigen::MatrixXd::Zero(variables_num, variables_num);
-
-    // Calculate D matrix
-    for (int i = 0; i < static_cast<int>(ref_stamps_.size()) - 1; i++) {
-        // Calculate time span
-        double time_span = ref_stamps_[i + 1] - ref_stamps_[i];
-        double time_coefficient = pow(time_span, -3);
-
-        // Intergrate to objective function
-        int influenced_variable_index = i * 6;
-        Q_matrix.block(influenced_variable_index, influenced_variable_index, 6, 6) += BezierCurveHessianMatrix * time_coefficient;
-    }
-
-    // // DEBUG
-    // std::cout << "Q_matrix: " << Q_matrix << std::endl;
-    // // END DEBUG
-
-    // // DEBUG
-    // for (int i = 0; i < Q_matrix.rows(); i++) {
-    //     for (int j = 0; j < Q_matrix.cols(); j++) {
-    //         std::cout << Q_matrix(i, j) << ", ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // std::cout << "-----------------" << std::endl;
-    // // END DEBUG
-
-    Q = Q_matrix.sparseView();
-    c.resize(variables_num);
-    c.setZero();
-}
-
-void OoqpOptimizationInterface::calculateCdfMatrix(Eigen::SparseMatrix<double, Eigen::RowMajor>& C, Eigen::VectorXd& d, Eigen::VectorXd& f) {
-    // Parse data
-    std::vector<std::vector<double>> polynomial_coefficients = std::get<0>(polymonial_unequal_constraints_);
-    std::vector<double> polynomial_lower_boundaries = std::get<1>(polymonial_unequal_constraints_);
-    std::vector<double> polynomial_upper_boundaries = std::get<2>(polymonial_unequal_constraints_);
-    int n = static_cast<int>(polynomial_coefficients.size());
-
-    // Initialize
-    int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
-    Eigen::MatrixXd C_matrix = Eigen::MatrixXd::Zero(n, variables_num);
-    Eigen::MatrixXd d_matrix = Eigen::MatrixXd::Zero(n, 1);
-    Eigen::MatrixXd f_matrix = Eigen::MatrixXd::Zero(n, 1);
-
-    // Transform
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < variables_num; j++) {
-            C_matrix(i, j) = polynomial_coefficients[i][j];
-        }
-        d_matrix(i, 0) = polynomial_lower_boundaries[i];
-        f_matrix(i, 0) = polynomial_upper_boundaries[i];
-    }
-
-    C = C_matrix.sparseView();
-    d = d_matrix;
-    f = f_matrix;
-}
+//     // ~Stage IV: calculate polymonial unequal constraints
+//     Eigen::SparseMatrix<double, Eigen::RowMajor> C;
+//     Eigen::VectorXd d;
+//     Eigen::VectorXd f;
+//     calculateCdfMatrix(C, d, f);
 
 
-// DEBUG
-// Test the optimization process without the end point constraint
-void OoqpOptimizationInterface::calculateAbMatrix(const std::array<double, 3>& single_start_constraints, const std::vector<std::vector<double>>& equal_constraints, Eigen::SparseMatrix<double, Eigen::RowMajor>& A, Eigen::VectorXd& b) {
+
+//     // ~Stage V: optimization
+//     std::vector<double> optimized_values;
+//     double objective_value = 0.0;
+//     bool optimization_status = solve(Q, c, A, b, C, d, f, useLowerLimitForX, useUpperLimitForX, lowerLimitForX, upperLimitForX, &optimized_values, &objective_value);
+
+//     // ~Stage VI: store information
+//     optimized_data_ = optimized_values;
+//     optimization_res_ = optimization_status;
+//     objective_value_ = objective_value;
+// }
+
+// /**
+//  * @brief calculate objective function
+//  * @param {*}
+//  * @return {*}
+//  */    
+// void OoqpOptimizationInterface::calculateQcMatrix(Eigen::SparseMatrix<double, Eigen::RowMajor>& Q, Eigen::VectorXd& c) {
+//     // Initialize Q matrix
+//     int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
+//     Eigen::MatrixXd Q_matrix = Eigen::MatrixXd::Zero(variables_num, variables_num);
+
+//     // Calculate D matrix
+//     for (int i = 0; i < static_cast<int>(ref_stamps_.size()) - 1; i++) {
+//         // Calculate time span
+//         double time_span = ref_stamps_[i + 1] - ref_stamps_[i];
+//         double time_coefficient = pow(time_span, -3);
+
+//         // Intergrate to objective function
+//         int influenced_variable_index = i * 6;
+//         Q_matrix.block(influenced_variable_index, influenced_variable_index, 6, 6) += BezierCurveHessianMatrix * time_coefficient;
+//     }
+
+//     // // DEBUG
+//     // std::cout << "Q_matrix: " << Q_matrix << std::endl;
+//     // // END DEBUG
+
+//     // // DEBUG
+//     // for (int i = 0; i < Q_matrix.rows(); i++) {
+//     //     for (int j = 0; j < Q_matrix.cols(); j++) {
+//     //         std::cout << Q_matrix(i, j) << ", ";
+//     //     }
+//     //     std::cout << std::endl;
+//     // }
+//     // std::cout << "-----------------" << std::endl;
+//     // // END DEBUG
+
+//     Q = Q_matrix.sparseView();
+//     c.resize(variables_num);
+//     c.setZero();
+// }
+
+// void OoqpOptimizationInterface::calculateCdfMatrix(Eigen::SparseMatrix<double, Eigen::RowMajor>& C, Eigen::VectorXd& d, Eigen::VectorXd& f) {
+//     // Parse data
+//     std::vector<std::vector<double>> polynomial_coefficients = std::get<0>(polymonial_unequal_constraints_);
+//     std::vector<double> polynomial_lower_boundaries = std::get<1>(polymonial_unequal_constraints_);
+//     std::vector<double> polynomial_upper_boundaries = std::get<2>(polymonial_unequal_constraints_);
+//     int n = static_cast<int>(polynomial_coefficients.size());
+
+//     // Initialize
+//     int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
+//     Eigen::MatrixXd C_matrix = Eigen::MatrixXd::Zero(n, variables_num);
+//     Eigen::MatrixXd d_matrix = Eigen::MatrixXd::Zero(n, 1);
+//     Eigen::MatrixXd f_matrix = Eigen::MatrixXd::Zero(n, 1);
+
+//     // Transform
+//     for (int i = 0; i < n; i++) {
+//         for (int j = 0; j < variables_num; j++) {
+//             C_matrix(i, j) = polynomial_coefficients[i][j];
+//         }
+//         d_matrix(i, 0) = polynomial_lower_boundaries[i];
+//         f_matrix(i, 0) = polynomial_upper_boundaries[i];
+//     }
+
+//     C = C_matrix.sparseView();
+//     d = d_matrix;
+//     f = f_matrix;
+// }
+
+
+// // DEBUG
+// // Test the optimization process without the end point constraint
+// void OoqpOptimizationInterface::calculateAbMatrix(const std::array<double, 3>& single_start_constraints, const std::vector<std::vector<double>>& equal_constraints, Eigen::SparseMatrix<double, Eigen::RowMajor>& A, Eigen::VectorXd& b) {
             
-    // Calculate dimensions and initialize
-    int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
-    int equal_constraints_num = 3 + (static_cast<int>(ref_stamps_.size()) - 2) * 3;
-    double start_cube_time_span = ref_stamps_[1] - ref_stamps_[0];
-    double end_cube_time_span = ref_stamps_[ref_stamps_.size() - 1] - ref_stamps_[ref_stamps_.size() - 2];
-    Eigen::MatrixXd A_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, variables_num);
-    Eigen::MatrixXd b_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, 1);
+//     // Calculate dimensions and initialize
+//     int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
+//     int equal_constraints_num = 3 + (static_cast<int>(ref_stamps_.size()) - 2) * 3;
+//     double start_cube_time_span = ref_stamps_[1] - ref_stamps_[0];
+//     double end_cube_time_span = ref_stamps_[ref_stamps_.size() - 1] - ref_stamps_[ref_stamps_.size() - 2];
+//     Eigen::MatrixXd A_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, variables_num);
+//     Eigen::MatrixXd b_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, 1);
 
-    // // supply start point and end point position constraints 
-    // A_matrix(0, 0) = 1.0, A_matrix(1, variables_num - 1) = 1.0;
-    // b_matrix(0, 0) = single_start_constraints[0], b_matrix(1, 0) = single_end_constraints[0];
+//     // // supply start point and end point position constraints 
+//     // A_matrix(0, 0) = 1.0, A_matrix(1, variables_num - 1) = 1.0;
+//     // b_matrix(0, 0) = single_start_constraints[0], b_matrix(1, 0) = single_end_constraints[0];
 
-    // // supply start point and end point velocity constraints
-    // A_matrix(2, 0) = -5.0, A_matrix(2, 1) = 5.0;
-    // b_matrix(2, 0) = single_start_constraints[1] * start_cube_time_span;
-    // A_matrix(3, variables_num - 2) = -5.0, A_matrix(3, variables_num - 1) = 5.0;
-    // b_matrix(3, 0) = single_end_constraints[1] * end_cube_time_span;
+//     // // supply start point and end point velocity constraints
+//     // A_matrix(2, 0) = -5.0, A_matrix(2, 1) = 5.0;
+//     // b_matrix(2, 0) = single_start_constraints[1] * start_cube_time_span;
+//     // A_matrix(3, variables_num - 2) = -5.0, A_matrix(3, variables_num - 1) = 5.0;
+//     // b_matrix(3, 0) = single_end_constraints[1] * end_cube_time_span;
 
-    // // supply start point and end point acceleration constraints
-    // A_matrix(4, 0) = 20.0, A_matrix(4, 1) = -40.0, A_matrix(4, 2) = 20.0;
-    // b_matrix(4, 0) = single_start_constraints[2] * start_cube_time_span;
-    // A_matrix(5, variables_num - 3) = 20.0, A_matrix(5, variables_num - 2) = -40.0, A_matrix(5, variables_num - 1) = 20.0;
-    // b_matrix(5, 0) = single_end_constraints[2] * end_cube_time_span;
+//     // // supply start point and end point acceleration constraints
+//     // A_matrix(4, 0) = 20.0, A_matrix(4, 1) = -40.0, A_matrix(4, 2) = 20.0;
+//     // b_matrix(4, 0) = single_start_constraints[2] * start_cube_time_span;
+//     // A_matrix(5, variables_num - 3) = 20.0, A_matrix(5, variables_num - 2) = -40.0, A_matrix(5, variables_num - 1) = 20.0;
+//     // b_matrix(5, 0) = single_end_constraints[2] * end_cube_time_span;
 
-    // Supply start point s constraint
-    A_matrix(0, 0) = 1.0;
-    b_matrix(0, 0) = single_start_constraints[0];
+//     // Supply start point s constraint
+//     A_matrix(0, 0) = 1.0;
+//     b_matrix(0, 0) = single_start_constraints[0];
 
-    // Supply start point v constraint
-    A_matrix(1, 0) = -5.0, A_matrix(2, 1) = 5.0;
-    b_matrix(1, 0) = single_start_constraints[1] * start_cube_time_span;
+//     // Supply start point v constraint
+//     A_matrix(1, 0) = -5.0, A_matrix(2, 1) = 5.0;
+//     b_matrix(1, 0) = single_start_constraints[1] * start_cube_time_span;
 
-    // Supply start point a constraint
-    A_matrix(2, 0) = 20.0, A_matrix(2, 1) = -40.0, A_matrix(2, 2) = 20.0;
-    b_matrix(2, 0) = single_start_constraints[2] * start_cube_time_span;
+//     // Supply start point a constraint
+//     A_matrix(2, 0) = 20.0, A_matrix(2, 1) = -40.0, A_matrix(2, 2) = 20.0;
+//     b_matrix(2, 0) = single_start_constraints[2] * start_cube_time_span;
 
-    // supply continuity ensurance constraints
-    for (int i = 0; i < static_cast<int>(equal_constraints.size()); i++) {
-        int constraint_index = i + 3;
-        for (int j = 0; j < variables_num; j++) {
+//     // supply continuity ensurance constraints
+//     for (int i = 0; i < static_cast<int>(equal_constraints.size()); i++) {
+//         int constraint_index = i + 3;
+//         for (int j = 0; j < variables_num; j++) {
             
-            // DEBUG: check this logic
-            assert(static_cast<int>(equal_constraints[i].size()) == variables_num);
-            // END DEBUG
+//             // DEBUG: check this logic
+//             assert(static_cast<int>(equal_constraints[i].size()) == variables_num);
+//             // END DEBUG
 
-            A_matrix(constraint_index, j) = equal_constraints[i][j];
-        }
-    }
-    A = A_matrix.sparseView();
-    b = b_matrix;
+//             A_matrix(constraint_index, j) = equal_constraints[i][j];
+//         }
+//     }
+//     A = A_matrix.sparseView();
+//     b = b_matrix;
 
-    // // DEBUG
-    // std::cout << "A_matrix: " << std::endl;
-    // for (int i = 0; i < A_matrix.rows(); i++) {
-    //     for (int j = 0; j < A_matrix.cols(); j++) {
-    //         std::cout << A_matrix(i, j) << ", ";
-    //     }
-    // }
-    // std::cout << "-------------------" << std::endl;
-    // std::cout << b_matrix << std::endl;
-    // std::cout << "-------------------" << std::endl;
-    // // END DEBUG
-}
+//     // // DEBUG
+//     // std::cout << "A_matrix: " << std::endl;
+//     // for (int i = 0; i < A_matrix.rows(); i++) {
+//     //     for (int j = 0; j < A_matrix.cols(); j++) {
+//     //         std::cout << A_matrix(i, j) << ", ";
+//     //     }
+//     // }
+//     // std::cout << "-------------------" << std::endl;
+//     // std::cout << b_matrix << std::endl;
+//     // std::cout << "-------------------" << std::endl;
+//     // // END DEBUG
+// }
 
-/**
- * @brief Calculate equal constraints, note that position constraints in the connection don't need to be considered
- * @param {*}
- */
-// This version delete the v and a constraint of the final point
-void OoqpOptimizationInterface::calculateAbMatrix(const std::array<double, 3>& single_start_constraints, const double& end_s_constraint, const std::vector<std::vector<double>>& equal_constraints, Eigen::SparseMatrix<double, Eigen::RowMajor>& A, Eigen::VectorXd& b) {
+// /**
+//  * @brief Calculate equal constraints, note that position constraints in the connection don't need to be considered
+//  * @param {*}
+//  */
+// // This version delete the v and a constraint of the final point
+// void OoqpOptimizationInterface::calculateAbMatrix(const std::array<double, 3>& single_start_constraints, const double& end_s_constraint, const std::vector<std::vector<double>>& equal_constraints, Eigen::SparseMatrix<double, Eigen::RowMajor>& A, Eigen::VectorXd& b) {
             
-    // Calculate dimensions and initialize
-    int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
-    int equal_constraints_num = 4 + (static_cast<int>(ref_stamps_.size()) - 2) * 3;
-    double start_cube_time_span = ref_stamps_[1] - ref_stamps_[0];
-    double end_cube_time_span = ref_stamps_[ref_stamps_.size() - 1] - ref_stamps_[ref_stamps_.size() - 2];
-    Eigen::MatrixXd A_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, variables_num);
-    Eigen::MatrixXd b_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, 1);
+//     // Calculate dimensions and initialize
+//     int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
+//     int equal_constraints_num = 4 + (static_cast<int>(ref_stamps_.size()) - 2) * 3;
+//     double start_cube_time_span = ref_stamps_[1] - ref_stamps_[0];
+//     double end_cube_time_span = ref_stamps_[ref_stamps_.size() - 1] - ref_stamps_[ref_stamps_.size() - 2];
+//     Eigen::MatrixXd A_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, variables_num);
+//     Eigen::MatrixXd b_matrix = Eigen::MatrixXd::Zero(equal_constraints_num, 1);
 
-    // supply start point and end point position constraints 
-    A_matrix(0, 0) = 1.0, A_matrix(1, variables_num - 1) = 1.0;
-    b_matrix(0, 0) = single_start_constraints[0], b_matrix(1, 0) = end_s_constraint;
+//     // supply start point and end point position constraints 
+//     A_matrix(0, 0) = 1.0, A_matrix(1, variables_num - 1) = 1.0;
+//     b_matrix(0, 0) = single_start_constraints[0], b_matrix(1, 0) = end_s_constraint;
 
-    // supply start point and end point velocity constraints
-    A_matrix(2, 0) = -5.0, A_matrix(2, 1) = 5.0;
-    b_matrix(2, 0) = single_start_constraints[1] * start_cube_time_span;
-    // A_matrix(3, variables_num - 2) = -5.0, A_matrix(3, variables_num - 1) = 5.0;
-    // b_matrix(3, 0) = single_end_constraints[1] * end_cube_time_span;
+//     // supply start point and end point velocity constraints
+//     A_matrix(2, 0) = -5.0, A_matrix(2, 1) = 5.0;
+//     b_matrix(2, 0) = single_start_constraints[1] * start_cube_time_span;
+//     // A_matrix(3, variables_num - 2) = -5.0, A_matrix(3, variables_num - 1) = 5.0;
+//     // b_matrix(3, 0) = single_end_constraints[1] * end_cube_time_span;
 
-    // supply start point and end point acceleration constraints
-    A_matrix(3, 0) = 20.0, A_matrix(3, 1) = -40.0, A_matrix(3, 2) = 20.0;
-    b_matrix(3, 0) = single_start_constraints[2] * start_cube_time_span;
-    // A_matrix(5, variables_num - 3) = 20.0, A_matrix(5, variables_num - 2) = -40.0, A_matrix(5, variables_num - 1) = 20.0;
-    // b_matrix(5, 0) = single_end_constraints[2] * end_cube_time_span;
+//     // supply start point and end point acceleration constraints
+//     A_matrix(3, 0) = 20.0, A_matrix(3, 1) = -40.0, A_matrix(3, 2) = 20.0;
+//     b_matrix(3, 0) = single_start_constraints[2] * start_cube_time_span;
+//     // A_matrix(5, variables_num - 3) = 20.0, A_matrix(5, variables_num - 2) = -40.0, A_matrix(5, variables_num - 1) = 20.0;
+//     // b_matrix(5, 0) = single_end_constraints[2] * end_cube_time_span;
   
-    // supply continuity ensurance constraints
-    for (int i = 0; i < static_cast<int>(equal_constraints.size()); i++) {
-        int constraint_index = i + 4;
-        for (int j = 0; j < variables_num; j++) {
+//     // supply continuity ensurance constraints
+//     for (int i = 0; i < static_cast<int>(equal_constraints.size()); i++) {
+//         int constraint_index = i + 4;
+//         for (int j = 0; j < variables_num; j++) {
             
-            // // DEBUG: check this logic
-            // assert(static_cast<int>(equal_constraints[i].size()) == variables_num);
-            // // END DEBUG
+//             // // DEBUG: check this logic
+//             // assert(static_cast<int>(equal_constraints[i].size()) == variables_num);
+//             // // END DEBUG
 
-            A_matrix(constraint_index, j) = equal_constraints[i][j];
-        }
-    }
-    A = A_matrix.sparseView();
-    b = b_matrix;
+//             A_matrix(constraint_index, j) = equal_constraints[i][j];
+//         }
+//     }
+//     A = A_matrix.sparseView();
+//     b = b_matrix;
 
-    // // DEBUG
-    // std::cout << "A_matrix: " << std::endl;
-    // for (int i = 0; i < A_matrix.rows(); i++) {
-    //     for (int j = 0; j < A_matrix.cols(); j++) {
-    //         std::cout << A_matrix(i, j) << ", ";
-    //     }
-    // }
-    // std::cout << "-------------------" << std::endl;
-    // std::cout << b_matrix << std::endl;
-    // std::cout << "-------------------" << std::endl;
-    // // END DEBUG
-}
+//     // // DEBUG
+//     // std::cout << "A_matrix: " << std::endl;
+//     // for (int i = 0; i < A_matrix.rows(); i++) {
+//     //     for (int j = 0; j < A_matrix.cols(); j++) {
+//     //         std::cout << A_matrix(i, j) << ", ";
+//     //     }
+//     // }
+//     // std::cout << "-------------------" << std::endl;
+//     // std::cout << b_matrix << std::endl;
+//     // std::cout << "-------------------" << std::endl;
+//     // // END DEBUG
+// }
 
-/**
- * @brief Calculate boundaries for intermediate points
- * @param {*}
- */    
-void OoqpOptimizationInterface::calculateBoundariesForIntermediatePoints(const std::vector<double>& single_lower_boundaries, const std::vector<double>& single_upper_boundaries, Eigen::Matrix<char, Eigen::Dynamic, 1>& useLowerLimitForX, Eigen::Matrix<char, Eigen::Dynamic, 1>& useUpperLimitForX, Eigen::VectorXd& lowerLimitForX, Eigen::VectorXd& upperLimitForX) {
-    int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
-    useLowerLimitForX.setConstant(variables_num, 1);
-    useUpperLimitForX.setConstant(variables_num, 1);
-    lowerLimitForX.resize(variables_num);
-    upperLimitForX.resize(variables_num);
+// /**
+//  * @brief Calculate boundaries for intermediate points
+//  * @param {*}
+//  */    
+// void OoqpOptimizationInterface::calculateBoundariesForIntermediatePoints(const std::vector<double>& single_lower_boundaries, const std::vector<double>& single_upper_boundaries, Eigen::Matrix<char, Eigen::Dynamic, 1>& useLowerLimitForX, Eigen::Matrix<char, Eigen::Dynamic, 1>& useUpperLimitForX, Eigen::VectorXd& lowerLimitForX, Eigen::VectorXd& upperLimitForX) {
+//     int variables_num = (static_cast<int>(ref_stamps_.size()) - 1) * 6;
+//     useLowerLimitForX.setConstant(variables_num, 1);
+//     useUpperLimitForX.setConstant(variables_num, 1);
+//     lowerLimitForX.resize(variables_num);
+//     upperLimitForX.resize(variables_num);
 
-    for (int i = 0; i < variables_num; i++) {
-        if (i == 0 || i == variables_num - 1) {
-            // For the first point and last point, the unequal constraints are invalid
-            useLowerLimitForX(i) = 0;
-            useUpperLimitForX(i) = 0;
-            lowerLimitForX(i) = 0.0;
-            upperLimitForX(i) = 0.0;
-        } else {
-            useLowerLimitForX(i) = 1;
-            useUpperLimitForX(i) = 1;
-            lowerLimitForX(i) = single_lower_boundaries[i];
-            upperLimitForX(i) = single_upper_boundaries[i];
-        }
-    }
-}
+//     for (int i = 0; i < variables_num; i++) {
+//         if (i == 0 || i == variables_num - 1) {
+//             // For the first point and last point, the unequal constraints are invalid
+//             useLowerLimitForX(i) = 0;
+//             useUpperLimitForX(i) = 0;
+//             lowerLimitForX(i) = 0.0;
+//             upperLimitForX(i) = 0.0;
+//         } else {
+//             useLowerLimitForX(i) = 1;
+//             useUpperLimitForX(i) = 1;
+//             lowerLimitForX(i) = single_lower_boundaries[i];
+//             upperLimitForX(i) = single_upper_boundaries[i];
+//         }
+//     }
+// }
 
-/**
- * @brief solve quartic programming
- * @param {*}
- * @return {*}
- */
-bool OoqpOptimizationInterface::solve(const Eigen::SparseMatrix<double, Eigen::RowMajor>& Q,
-                const Eigen::VectorXd& c,
-                const Eigen::SparseMatrix<double, Eigen::RowMajor>& A,
-                const Eigen::VectorXd& b,
-                const Eigen::SparseMatrix<double, Eigen::RowMajor>& C,
-                const Eigen::VectorXd& d, const Eigen::VectorXd& f,
-                Eigen::Matrix<char, Eigen::Dynamic, 1>& useLowerLimitForX, Eigen::Matrix<char, Eigen::Dynamic, 1>& useUpperLimitForX, 
-                Eigen::VectorXd& lowerLimitForX, Eigen::VectorXd& upperLimitForX, std::vector<double>* optimized_values, double* objective_value) {
+// /**
+//  * @brief solve quartic programming
+//  * @param {*}
+//  * @return {*}
+//  */
+// bool OoqpOptimizationInterface::solve(const Eigen::SparseMatrix<double, Eigen::RowMajor>& Q,
+//                 const Eigen::VectorXd& c,
+//                 const Eigen::SparseMatrix<double, Eigen::RowMajor>& A,
+//                 const Eigen::VectorXd& b,
+//                 const Eigen::SparseMatrix<double, Eigen::RowMajor>& C,
+//                 const Eigen::VectorXd& d, const Eigen::VectorXd& f,
+//                 Eigen::Matrix<char, Eigen::Dynamic, 1>& useLowerLimitForX, Eigen::Matrix<char, Eigen::Dynamic, 1>& useUpperLimitForX, 
+//                 Eigen::VectorXd& lowerLimitForX, Eigen::VectorXd& upperLimitForX, std::vector<double>* optimized_values, double* objective_value) {
     
-    // // DEBUG
-    // std::cout << "Q: " << Q << std::endl;
-    // std::cout << "c: " << c << std::endl;
-    // std::cout << "A: " << A << std::endl;
-    // std::cout << "b: " << b << std::endl;
-    // std::cout << "useLowerLimitForX: " << useLowerLimitForX << std::endl;
-    // std::cout << "useUpperLimitForX: " << useUpperLimitForX << std::endl;
-    // std::cout << "lowerLimitForX: " << lowerLimitForX << std::endl;
-    // std::cout << "upperLimitForX: " << upperLimitForX << std::endl;
-    // // END DEBUG
+//     // // DEBUG
+//     // std::cout << "Q: " << Q << std::endl;
+//     // std::cout << "c: " << c << std::endl;
+//     // std::cout << "A: " << A << std::endl;
+//     // std::cout << "b: " << b << std::endl;
+//     // std::cout << "useLowerLimitForX: " << useLowerLimitForX << std::endl;
+//     // std::cout << "useUpperLimitForX: " << useUpperLimitForX << std::endl;
+//     // std::cout << "lowerLimitForX: " << lowerLimitForX << std::endl;
+//     // std::cout << "upperLimitForX: " << upperLimitForX << std::endl;
+//     // // END DEBUG
 
-    // // DEBUG
-    // std::cout << "solve once" << std::endl;
-    // // END DEBUG
+//     // // DEBUG
+//     // std::cout << "solve once" << std::endl;
+//     // // END DEBUG
 
-    Eigen::VectorXd x;
-    int nx = Q.rows();
-    x.setZero(nx);
-    // Make copies of variables that are changed
-    auto ccopy(c);
-    auto Acopy(A);
-    auto bcopy(b);
-    auto Ccopy(C);
-    auto dcopy(d);
-    auto fcopy(f);
+//     Eigen::VectorXd x;
+//     int nx = Q.rows();
+//     x.setZero(nx);
+//     // Make copies of variables that are changed
+//     auto ccopy(c);
+//     auto Acopy(A);
+//     auto bcopy(b);
+//     auto Ccopy(C);
+//     auto dcopy(d);
+//     auto fcopy(f);
 
-    Eigen::SparseMatrix<double, Eigen::RowMajor> Q_triangular = Q.triangularView<Eigen::Lower>();
+//     Eigen::SparseMatrix<double, Eigen::RowMajor> Q_triangular = Q.triangularView<Eigen::Lower>();
     
-    // Compress sparse Eigen matrices (refer to Eigen Sparse Matrix user manual)
-    Q_triangular.makeCompressed();
-    Acopy.makeCompressed();
-    Ccopy.makeCompressed();
+//     // Compress sparse Eigen matrices (refer to Eigen Sparse Matrix user manual)
+//     Q_triangular.makeCompressed();
+//     Acopy.makeCompressed();
+//     Ccopy.makeCompressed();
 
-    assert(Ccopy.rows() == dcopy.size());
-    assert(Ccopy.rows() == fcopy.size());
+//     assert(Ccopy.rows() == dcopy.size());
+//     assert(Ccopy.rows() == fcopy.size());
 
-    // Calculate used flag for polynomial inequal constraints
-    Eigen::Matrix<char, Eigen::Dynamic, 1> useLowerLimitForPolynomialInequalConstraints;
-    Eigen::Matrix<char, Eigen::Dynamic, 1> useUpperLimitForPolynomialInequalConstraints;
-    useLowerLimitForPolynomialInequalConstraints.setConstant(static_cast<int>(dcopy.size()), 1);
-    useUpperLimitForPolynomialInequalConstraints.setConstant(static_cast<int>(dcopy.size()), 1);
+//     // Calculate used flag for polynomial inequal constraints
+//     Eigen::Matrix<char, Eigen::Dynamic, 1> useLowerLimitForPolynomialInequalConstraints;
+//     Eigen::Matrix<char, Eigen::Dynamic, 1> useUpperLimitForPolynomialInequalConstraints;
+//     useLowerLimitForPolynomialInequalConstraints.setConstant(static_cast<int>(dcopy.size()), 1);
+//     useUpperLimitForPolynomialInequalConstraints.setConstant(static_cast<int>(dcopy.size()), 1);
 
-    // Initialize new problem formulation.
-    int my = bcopy.size();
-    int mz = dcopy.size(); 
-    int nnzQ = Q_triangular.nonZeros();
-    int nnzA = Acopy.nonZeros();
-    int nnzC = Ccopy.nonZeros(); // Unequal constraint , set with 0
+//     // Initialize new problem formulation.
+//     int my = bcopy.size();
+//     int mz = dcopy.size(); 
+//     int nnzQ = Q_triangular.nonZeros();
+//     int nnzA = Acopy.nonZeros();
+//     int nnzC = Ccopy.nonZeros(); // Unequal constraint , set with 0
 
 
-    // // DEBUG
-    // // Set the number of the inequal constraints to 0 to test the remain function
-    // mz = 0;
-    // nnzC = 0;
-    // // END DEBUG
+//     // // DEBUG
+//     // // Set the number of the inequal constraints to 0 to test the remain function
+//     // mz = 0;
+//     // nnzC = 0;
+//     // // END DEBUG
 
-    QpGenSparseMa27* qp = new QpGenSparseMa27(nx, my, mz, nnzQ, nnzA, nnzC);
+//     QpGenSparseMa27* qp = new QpGenSparseMa27(nx, my, mz, nnzQ, nnzA, nnzC);
     
-    // Fill in problem data
-    double* cp = &ccopy.coeffRef(0);
-    std::vector<int> irowQ_vec, jcolQ_vec;
-    Tools::calculateParam(Q_triangular, &irowQ_vec, &jcolQ_vec);
-    int irowQ[irowQ_vec.size()], jcolQ[jcolQ_vec.size()];
-    memcpy(irowQ, &irowQ_vec[0], irowQ_vec.size() * sizeof(irowQ_vec[0]));
-    memcpy(jcolQ, &jcolQ_vec[0], jcolQ_vec.size() * sizeof(jcolQ_vec[0]));
-    double* dQ = Q_triangular.valuePtr();
+//     // Fill in problem data
+//     double* cp = &ccopy.coeffRef(0);
+//     std::vector<int> irowQ_vec, jcolQ_vec;
+//     Tools::calculateParam(Q_triangular, &irowQ_vec, &jcolQ_vec);
+//     int irowQ[irowQ_vec.size()], jcolQ[jcolQ_vec.size()];
+//     memcpy(irowQ, &irowQ_vec[0], irowQ_vec.size() * sizeof(irowQ_vec[0]));
+//     memcpy(jcolQ, &jcolQ_vec[0], jcolQ_vec.size() * sizeof(jcolQ_vec[0]));
+//     double* dQ = Q_triangular.valuePtr();
 
-    double* xlow = &lowerLimitForX.coeffRef(0);
-    char* ixlow = &useLowerLimitForX.coeffRef(0);
-    double* xupp = &upperLimitForX.coeffRef(0);
-    char* ixupp = &useUpperLimitForX.coeffRef(0);
+//     double* xlow = &lowerLimitForX.coeffRef(0);
+//     char* ixlow = &useLowerLimitForX.coeffRef(0);
+//     double* xupp = &upperLimitForX.coeffRef(0);
+//     char* ixupp = &useUpperLimitForX.coeffRef(0);
     
-    std::vector<int> irowA_vec, jcolA_vec;
-    Tools::calculateParam(Acopy, &irowA_vec, &jcolA_vec);
-    int irowA[irowA_vec.size()], jcolA[jcolA_vec.size()];
-    memcpy(irowA, &irowA_vec[0], irowA_vec.size() * sizeof(irowA_vec[0]));
-    memcpy(jcolA, &jcolA_vec[0], jcolA_vec.size() * sizeof(jcolA_vec[0]));
-    double* dA = Acopy.valuePtr();
-    double* bA = &bcopy.coeffRef(0);
+//     std::vector<int> irowA_vec, jcolA_vec;
+//     Tools::calculateParam(Acopy, &irowA_vec, &jcolA_vec);
+//     int irowA[irowA_vec.size()], jcolA[jcolA_vec.size()];
+//     memcpy(irowA, &irowA_vec[0], irowA_vec.size() * sizeof(irowA_vec[0]));
+//     memcpy(jcolA, &jcolA_vec[0], jcolA_vec.size() * sizeof(jcolA_vec[0]));
+//     double* dA = Acopy.valuePtr();
+//     double* bA = &bcopy.coeffRef(0);
     
-    // // DEBUG
-    // int irowC[] = {};
-    // int jcolC[] = {};
-    // double dC[] = {};
-    // double clow[] = {};
-    // char iclow[] = {};
-    // double cupp[] = {};
-    // char icupp[] = {};
-    // // END DEBUG
+//     // // DEBUG
+//     // int irowC[] = {};
+//     // int jcolC[] = {};
+//     // double dC[] = {};
+//     // double clow[] = {};
+//     // char iclow[] = {};
+//     // double cupp[] = {};
+//     // char icupp[] = {};
+//     // // END DEBUG
 
-    std::vector<int> irowC_vec, jcolC_vec;
-    Tools::calculateParam(Ccopy, &irowC_vec, &jcolC_vec);
-    int irowC[irowC_vec.size()], jcolC[jcolC_vec.size()];
-    memcpy(irowC, &irowC_vec[0], irowC_vec.size() * sizeof(irowC_vec[0]));
-    memcpy(jcolC, &jcolC_vec[0], jcolC_vec.size() * sizeof(jcolC_vec[0]));
-    double* dC = Ccopy.valuePtr();
-    double* clow = &dcopy.coeffRef(0);
-    char* iclow = &useLowerLimitForPolynomialInequalConstraints.coeffRef(0);
-    double* cupp = &fcopy.coeffRef(0);
-    char* icupp = &useUpperLimitForPolynomialInequalConstraints.coeffRef(0);
+//     std::vector<int> irowC_vec, jcolC_vec;
+//     Tools::calculateParam(Ccopy, &irowC_vec, &jcolC_vec);
+//     int irowC[irowC_vec.size()], jcolC[jcolC_vec.size()];
+//     memcpy(irowC, &irowC_vec[0], irowC_vec.size() * sizeof(irowC_vec[0]));
+//     memcpy(jcolC, &jcolC_vec[0], jcolC_vec.size() * sizeof(jcolC_vec[0]));
+//     double* dC = Ccopy.valuePtr();
+//     double* clow = &dcopy.coeffRef(0);
+//     char* iclow = &useLowerLimitForPolynomialInequalConstraints.coeffRef(0);
+//     double* cupp = &fcopy.coeffRef(0);
+//     char* icupp = &useUpperLimitForPolynomialInequalConstraints.coeffRef(0);
 
 
 
-    QpGenData *prob = (QpGenData *)qp->copyDataFromSparseTriple(cp, irowQ, nnzQ, jcolQ, dQ, xlow, ixlow, xupp, ixupp, irowA, nnzA, jcolA, dA, bA, irowC, nnzC, jcolC, dC, clow, iclow, cupp, icupp);
+//     QpGenData *prob = (QpGenData *)qp->copyDataFromSparseTriple(cp, irowQ, nnzQ, jcolQ, dQ, xlow, ixlow, xupp, ixupp, irowA, nnzA, jcolA, dA, bA, irowC, nnzC, jcolC, dC, clow, iclow, cupp, icupp);
     
-    // Create object to store problem variables
-    QpGenVars* vars = (QpGenVars*)qp->makeVariables(prob);
+//     // Create object to store problem variables
+//     QpGenVars* vars = (QpGenVars*)qp->makeVariables(prob);
 
-    // // DEBUG
-    // prob->print();
-    // // END DEBUG
+//     // // DEBUG
+//     // prob->print();
+//     // // END DEBUG
 
-    // Create object to store problem residual data
-    QpGenResiduals* resid = (QpGenResiduals*)qp->makeResiduals(prob);
+//     // Create object to store problem residual data
+//     QpGenResiduals* resid = (QpGenResiduals*)qp->makeResiduals(prob);
 
-    // Create solver object
-    GondzioSolver* s = new GondzioSolver(qp, prob);
+//     // Create solver object
+//     GondzioSolver* s = new GondzioSolver(qp, prob);
 
-    // // DEBUG
-    // s->monitorSelf();
-    // // END DEBUG
+//     // // DEBUG
+//     // s->monitorSelf();
+//     // // END DEBUG
 
-    // Solve
-    int status = s->solve(prob, vars, resid);
+//     // Solve
+//     int status = s->solve(prob, vars, resid);
 
-    // // Test
-    // double objective_value = prob->objectiveValue(vars);
-    // std::cout << "Objective value: " << objective_value << std::endl;
+//     // // Test
+//     // double objective_value = prob->objectiveValue(vars);
+//     // std::cout << "Objective value: " << objective_value << std::endl;
 
-    // DEBUG
-    std::cout << "Optimization status: " << status << std::endl;
-    // END DEBUG
+//     // DEBUG
+//     std::cout << "Optimization status: " << status << std::endl;
+//     // END DEBUG
 
-    if (status == TerminationCode::SUCCESSFUL_TERMINATION) {
-        vars->x->copyIntoArray(&x.coeffRef(0));
-        *optimized_values = std::vector<double>(x.data(), x.data() + x.rows() * x.cols());
-        *objective_value = prob->objectiveValue(vars);
-    }
+//     if (status == TerminationCode::SUCCESSFUL_TERMINATION) {
+//         vars->x->copyIntoArray(&x.coeffRef(0));
+//         *optimized_values = std::vector<double>(x.data(), x.data() + x.rows() * x.cols());
+//         *objective_value = prob->objectiveValue(vars);
+//     }
 
-    delete s;
-    delete resid;
-    delete vars;
-    delete prob;
-    delete qp;
+//     delete s;
+//     delete resid;
+//     delete vars;
+//     delete prob;
+//     delete qp;
 
-    return status == TerminationCode::SUCCESSFUL_TERMINATION;
+//     return status == TerminationCode::SUCCESSFUL_TERMINATION;
 
-}
+// }
 
 VelocityOptimizer::VelocityOptimizer() {
     // ooqp_itf_ = new OoqpOptimizationInterface();
