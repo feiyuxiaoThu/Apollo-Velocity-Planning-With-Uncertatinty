@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-09 14:09:59
+ * @LastEditTime: 2022-10-11 14:19:03
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -441,17 +441,17 @@ void StGraph::loadAccelerationLimitation() {
         double sampled_t = (static_cast<double>(i) / static_cast<double>(param_.acc_limit_t_sampled_points_num)) * param_.t_max;
         sampled_ts[i] = sampled_t;
 
-        // // Calculate the lower boundary point
-        // double sampled_cur_lower_s = start_velocity_ * sampled_t + 0.5 * param_.acc_min * pow(sampled_t, 2);
-        // if (sampled_t <= param_.acc_min_initial_valid_maximum) {
-        //     sampled_lower_ss[i] = 0.0;
-        // } else {
-        //     sampled_lower_ss[i] = std::max(0.0, sampled_cur_lower_s);
-        // }
-        // if (i > 0) {
-        //     sampled_lower_ss[i] = std::max(sampled_lower_ss[i], sampled_lower_ss[i - 1]);
-        // }
-        sampled_lower_ss[0] = 0.0;
+        // Calculate the lower boundary point
+        double sampled_cur_lower_s = start_velocity_ * sampled_t + 0.5 * param_.acc_min * pow(sampled_t, 2);
+        if (sampled_t <= param_.acc_min_initial_valid_maximum) {
+            sampled_lower_ss[i] = 0.0;
+        } else {
+            sampled_lower_ss[i] = std::max(0.0, sampled_cur_lower_s);
+        }
+        if (i > 0) {
+            sampled_lower_ss[i] = std::max(sampled_lower_ss[i], sampled_lower_ss[i - 1]);
+        }
+        // sampled_lower_ss[0] = 0.0;
         
 
         // Calculate the upper boundary point
