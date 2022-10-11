@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:08
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-21 15:04:10
+ * @LastEditTime: 2022-10-11 10:09:04
  * @Description: velocity optimization.
  */
 
@@ -120,11 +120,11 @@ class OoqpOptimizationInterface {
 };
 
 class VelocityOptimizer {
- public:
+ public:    
     VelocityOptimizer();
     ~VelocityOptimizer();
 
-    bool runOnce(const std::vector<std::vector<Cube2D<double>>>& cube_paths, const std::array<double, 3>& start_state, std::vector<std::pair<double, double>>& last_s_range, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, std::vector<double>* s, std::vector<double>* t);
+    bool runOnce(const std::vector<std::vector<Cube2D<double>>>& cube_paths, const std::array<double, 3>& start_state, std::vector<std::pair<double, double>>& last_s_range, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, const int& final_s_sampled_num, std::vector<double>* s, std::vector<double>* t);
     
     void runSingleCubesPath(const std::vector<Cube2D<double>>& cube_path, const std::array<double, 3>& start_state, const double& end_s, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, int index);
     
@@ -134,15 +134,16 @@ class VelocityOptimizer {
 
     std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>> generatePolynimalUnequalConstraints(const std::vector<Cube2D<double>>& cube_path, const double& start_velocity, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration);
 
-    
-
-    OoqpOptimizationInterface* ooqp_itf_{nullptr};
 
     // Store the information for different cube paths
     std::vector<std::vector<double>> ss_;
     std::vector<std::vector<double>> tt_;
     std::vector<bool> ress_;
     std::vector<double> values_;
+
+    // Const
+    int available_all_cube_paths_s_num{1};
+    int available_single_cube_path_s_num{1};
 };
 
 // Generate interpolated curves

@@ -82,7 +82,7 @@ void DecisionMaking::SubVehicle::checkStates() {
 
     clock_t end_time = clock();
     double time_consumption = static_cast<double>((end_time - start_time)) / CLOCKS_PER_SEC;
-    std::cout << "Time consumption: " << time_consumption << std::endl;
+    printf("[SubVehicle] Velocity planning for all possible states completed, time consumption: %lf.\n", time_consumption);
 
     // // Calculate velocity for the states, whose velocity profile generation is failed
     // if (!(&(states_set_[StateNames::FORWARD]))->velocity_profile_generation_state_) {
