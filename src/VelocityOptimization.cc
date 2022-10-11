@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-09 14:09:14
+ * @LastEditTime: 2022-10-11 10:24:52
  * @Description: velocity optimization.
  */
 
@@ -688,20 +688,17 @@ void OsqpOptimizationInterface::calculateConstraintsMatrix(const std::vector<dou
 
 // }
 
-VelocityOptimizer::VelocityOptimizer() {
-    // ooqp_itf_ = new OoqpOptimizationInterface();
+VelocityOptimizer::VelocityOptimizer() = default;
 
-}
 
 VelocityOptimizer::~VelocityOptimizer() = default;
 
-bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& cube_paths, const std::array<double, 3>& start_state, std::vector<std::pair<double, double>>& last_s_range, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, std::vector<double>* s, std::vector<double>* t) {
+bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& cube_paths, const std::array<double, 3>& start_state, std::vector<std::pair<double, double>>& last_s_range, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, const int& final_s_sampled_num, std::vector<double>* s, std::vector<double>* t) {
 
     // ~Stage I: determine the s sampling number due to the number of the available paths
     int available_cube_paths_num = cube_paths.size();
-    const int optimization_maximum_number = 10;
+    const int optimization_maximum_number = final_s_sampled_num;
     int s_sampling_number = static_cast<int>(optimization_maximum_number / available_cube_paths_num);
-    int practical_optimization_number = available_cube_paths_num * s_sampling_number;
 
     // ~Stage II: sampling s with a fixed interval
     double s_available_range = last_s_range.back().second - last_s_range.front().first;
@@ -713,6 +710,7 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
         sampled_s.emplace_back(s_start);
         s_start += s_interval;
     }
+    std::reverse(sampled_s.begin(), sampled_s.end());
 
     // ~Stage III: optimization
     int n = cube_paths.size() * sampled_s.size();
@@ -720,15 +718,22 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
 
     ss_.resize(n);
     tt_.resize(n);
-    ress_.resize(n);
-    values_.resize(n);
+    ress_.resize(n, false);
+    values_.resize(n, -1.0);
 
     // std::vector<std::thread> thread_set(cube_paths.size() * sampled_s.size());
 
     for (int i = 0; i < cube_paths.size(); i++) {
+        int optimization_success_num_current_cube_path = 0;
         for (int j = 0; j < sampled_s.size(); j++) {
             int index = i * sampled_s.size() + j;
             runSingleCubesPath(cube_paths[i], start_state, sampled_s[j], max_velocity, min_velocity, max_acceleration, min_acceleration, index);
+            if (ress_[index]) {
+                optimization_success_num_current_cube_path += 1;
+            }
+            if (optimization_success_num_current_cube_path >= available_single_cube_path_s_num) {
+                break;
+            } 
             // thread_set[index] = std::thread(&VelocityPlanning::VelocityOptimizer::runSingleCubesPath, this, cube_paths[i], start_state, sampled_s[j], max_velocity, min_velocity, max_acceleration, min_acceleration, index);
         }
     }
@@ -792,11 +797,11 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
 
     }
 
-    // Select the index with the top three s
+    // Select the index with the top n s
     double min_jerk = static_cast<double>(INT_MAX);
     int win_index = -1;
     std::sort(s_info.rbegin(), s_info.rend());
-    for (int i = 0; i < std::min(1, static_cast<int>(s_info.size())); i++) {
+    for (int i = 0; i < std::min(available_all_cube_paths_s_num, static_cast<int>(s_info.size())); i++) {
         double cur_jerk = values_[s_info[i].second];
         
         // // DEBUG
@@ -875,8 +880,6 @@ void VelocityOptimizer::runSingleCubesPath(const std::vector<Cube2D<double>>& cu
     // ~Stage V: optimization
     std::vector<double> optimized_s;
     double objective_value = 0.0;
-    // ooqp_itf_->load(ref_stamps, start_state, end_s, unequal_constraints, equal_constraints, polynomial_unequal_constraints);
-    // bool optimization_res = ooqp_itf_->runOnce(&optimized_s, &objective_value);
 
     std::array<double, 3> end_state = {end_s, 0.0, 0.0};
     bool optimization_res = OsqpOptimizationInterface::runOnce(ref_stamps, start_state, end_state, unequal_constraints, equal_constraints, polynomial_unequal_constraints, &optimized_s, &objective_value);
@@ -1393,8 +1396,15 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     printf("[VelocityPlanner] Planned state name: %s.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
     printf("[VelocityPlanner] Velocity range: %lf - %lf, acceleration range: %lf - %lf.\n", max_speed, min_speed, max_acc, min_acc);
 
+    int final_s_sampled_num = 0;
+    if (planning_state_->getStateName() == DecisionMaking::StateNames::FORWARD) {
+        final_s_sampled_num = 30;
+    } else {
+        final_s_sampled_num = 10;
+    }
+
     velocity_optimizer_ = new VelocityPlanning::VelocityOptimizer();
-    bool optimization_success = velocity_optimizer_->runOnce(enhanced_cube_paths, start_state_, last_s_range, max_speed, min_speed, max_acc, min_acc, &s, &t);
+    bool optimization_success = velocity_optimizer_->runOnce(enhanced_cube_paths, start_state_, last_s_range, max_speed, min_speed, max_acc, min_acc, final_s_sampled_num, &s, &t);
 
     if (optimization_success) {
         // std::cout << "Velocity profile generation success." << std::endl;
