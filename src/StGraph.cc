@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-11 14:19:03
+ * @LastEditTime: 2022-10-18 14:56:30
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -364,7 +364,7 @@ std::vector<std::tuple<std::vector<Eigen::Vector2d>, double, double>> StGraph::l
             s_end = ego_vehicle_end_collision_index * LANE_GAP_DISTANCE;
         } else {
             t_start = 0.0;
-            t_end = std::min((cur_obs_end_collision_index * OBSTACLE_MARGIN) / obstacle.getObstacleVelocity(), param_.t_max);
+            t_end = param_.t_max;
             s_start = ego_vehicle_start_collision_index * LANE_GAP_DISTANCE;
             s_end = s_start;
         }
@@ -391,7 +391,12 @@ std::vector<std::tuple<std::vector<Eigen::Vector2d>, double, double>> StGraph::l
         // // END DEBUG
 
         // Get four vertice
-        std::vector<Eigen::Vector2d> real_vertice = {{t_start, s_start}, {t_start, s_start + projected_length}, {t_end, s_end}, {t_end, s_end - projected_length}};
+        std::vector<Eigen::Vector2d> real_vertice;
+        if (obstacle.getObstacleVelocity() >= 0.5) {
+            real_vertice = {{t_start, s_start}, {t_start, s_start + projected_length}, {t_end, s_end}, {t_end, s_end - projected_length}};
+        } else {
+            real_vertice = {{t_start, s_start}, {t_start, s_start + projected_length}, {t_end, s_end + projected_length}, {t_end, s_end}};
+        }
 
         // Record
         real_vertex_and_interaction_theta.emplace_back(std::make_tuple(real_vertice, ego_vehicle_interaction_theta, obstacle_interaction_theta));
