@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-18 11:33:25
+ * @LastEditTime: 2022-10-18 11:39:52
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -391,7 +391,7 @@ std::vector<std::tuple<std::vector<Eigen::Vector2d>, double, double>> StGraph::l
         // // END DEBUG
 
         // Get four vertice
-        std::vector<Eigen::Vector2d> real_vertice = {{t_start, s_start}, {t_start, s_start + projected_length}, {t_end, s_end + projected_length}, {t_end, s_end}};
+        std::vector<Eigen::Vector2d> real_vertice = {{t_start, s_start}, {t_start, s_start + projected_length}, {t_end, s_end}, {t_end, s_end - projected_length}};
 
         // Record
         real_vertex_and_interaction_theta.emplace_back(std::make_tuple(real_vertice, ego_vehicle_interaction_theta, obstacle_interaction_theta));
