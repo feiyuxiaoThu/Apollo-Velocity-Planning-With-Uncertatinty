@@ -817,7 +817,7 @@ bool DecisionMaking::RSS::occupationInteractionJudgement(const OccupationArea &s
 
 
         int new_start_index = obstacle_occupation_area.getSampledOccupationAreaBijectionIndex(cur_obstacle_start_interact_index);
-        for (int i = std::min(obstacle_occupation_area.getOccupationArea().size(), obstacle_occupation_area.getSampledOccupationAreaBijectionIndex(new_start_index + 1)); i >= new_start_index ; i++) {
+        for (int i = std::min(obstacle_occupation_area.getOccupationArea().size(), obstacle_occupation_area.getSampledOccupationAreaBijectionIndex(new_start_index + 1)); i >= new_start_index ; i--) {
             if (Tools::isRectangleOverlap(subvehicle_occupation_area.getOccupationArea()[cur_ego_vehicle_start_interact_index], obstacle_occupation_area.getOccupationArea()[i], RECTANGLE_INTERACTION_EXPAND_RATION, RECTANGLE_INTERACTION_EXPAND_RATION)) {
                 cur_obstacle_end_interact_index = i;
                 break;

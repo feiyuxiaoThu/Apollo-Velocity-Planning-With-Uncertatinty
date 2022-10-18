@@ -47,6 +47,38 @@
     /vehicle/base_footprint /vehicle/geometry_center
   "/>
 
+    <!-- The static transformer below is used for visualziation vehicle model in rviz -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="vehicle_namespace_2" args="
+    0 0 0
+    0 0 0 1
+    /base_link /vehicle/base_link
+  "/>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="vehicle_namespace_3" args="
+    0 0 0
+    0 0 0 1
+    /wheel_fl /vehicle/wheel_fl
+  "/>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="vehicle_namespace_4" args="
+    0 0 0
+    0 0 0 1
+    /wheel_rl /vehicle/wheel_rl
+  "/>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="vehicle_namespace_5" args="
+    0 0 0
+    0 0 0 1
+    /wheel_fr /vehicle/wheel_fr
+  "/>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="vehicle_namespace_6" args="
+    0 0 0
+    0 0 0 1
+    /wheel_rr /vehicle/wheel_rr
+  "/>
+  <!-- End visualization vehicle model -->
+
   <!-- Transform the GPS location -->
   <node pkg="vehicle_center_location" type="vehicle_center_location_node" name="vehicle_center_location">
     <param name="distance_from_rear_to_center" value="1.4249"/>
