@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-28 14:00:59
+ * @LastEditTime: 2022-10-25 15:24:16
  * @Description: velocity optimization.
  */
 
@@ -1365,7 +1365,7 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     }
 
     // Screen the cubes paths
-    std::vector<Cube2D<double>> cube_path = Apollo::PjsoInterface::selectCubesPath(cube_paths);
+    // std::vector<Cube2D<double>> cube_path = Apollo::PjsoInterface::selectCubesPath(cube_paths);
 
     // // ~Stage II: safety enhancement
     // std::vector<std::vector<Cube2D<double>>> enhanced_cube_paths;
@@ -1405,21 +1405,21 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     const double expected_acc = planning_state_->getVehicleDynamicPlanningExpectedAcceleration();
 
 
-    bool velocity_profile_generation_state = Apollo::PjsoInterface::runOnce(start_state_, st_graph_->param_.s_max, max_speed, min_speed, max_acceleration, min_acceleration, max_jerk, min_jerk, cruise_speed, cube_path, expected_acc, &s, &v, &a, &t);
+    // bool velocity_profile_generation_state = Apollo::PjsoInterface::runOnce(start_state_, st_graph_->param_.s_max, max_speed, min_speed, max_acceleration, min_acceleration, max_jerk, min_jerk, cruise_speed, cube_path, expected_acc, &s, &v, &a, &t);
 
 
-    if (!velocity_profile_generation_state) {
+    // if (!velocity_profile_generation_state) {
 
-        // DEBUG
-        std::cout << "********************************************" << std::endl;
-        std::cout << "PJSO failed due to optimization problem" << std::endl;
-        std::cout << "********************************************" << std::endl;
-        // END DEBUG
+    //     // DEBUG
+    //     std::cout << "********************************************" << std::endl;
+    //     std::cout << "PJSO failed due to optimization problem" << std::endl;
+    //     std::cout << "********************************************" << std::endl;
+    //     // END DEBUG
 
-        planning_state_->setSafety(false);
-        planning_state_->velocity_profile_generation_state_ = false;
-        return false;
-    }
+    //     planning_state_->setSafety(false);
+    //     planning_state_->velocity_profile_generation_state_ = false;
+    //     return false;
+    // }
 
 
     // DEBUG
