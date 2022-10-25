@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-25 15:24:16
+ * @LastEditTime: 2022-10-25 17:07:12
  * @Description: velocity optimization.
  */
 
@@ -1356,7 +1356,7 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     //     }
     // }
 
-    bool graph_success = st_graph_->runOnce(obstacles, &cube_paths, &last_s_range);
+    bool graph_success = st_graph_->ForwardSearch(obstacles);
     if (!graph_success) {
         planning_state_->setSafety(false);
         planning_state_->velocity_profile_generation_state_ = false;
@@ -1406,6 +1406,23 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
 
 
     // bool velocity_profile_generation_state = Apollo::PjsoInterface::runOnce(start_state_, st_graph_->param_.s_max, max_speed, min_speed, max_acceleration, min_acceleration, max_jerk, min_jerk, cruise_speed, cube_path, expected_acc, &s, &v, &a, &t);
+
+    st_graph_->init_s_ = start_state_;
+    bool spline_generation_success = st_graph_->GenerateSpline();
+    if (!spline_generation_success) {
+        planning_state_->setSafety(false);
+        planning_state_->velocity_profile_generation_state_ = false;
+        std::cout << "State name: " << planning_state_->getStateName() << " is not safe due to spline generation failure." << std::endl;
+        return false;
+    }
+
+    // Supply data from spline
+    for (double cur_t = 0.0; cur_t <= 5.0; cur_t += 0.1) {
+        s.push_back(st_graph_->st_spline_(cur_t));
+        v.push_back(st_graph_->st_spline_.Derivative(cur_t));
+        a.push_back(st_graph_->st_spline_.SecondOrderDerivative(cur_t));
+        t.push_back(cur_t);
+    }
 
 
     // if (!velocity_profile_generation_state) {

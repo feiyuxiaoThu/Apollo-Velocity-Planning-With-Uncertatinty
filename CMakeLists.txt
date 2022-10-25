@@ -2,14 +2,11 @@ cmake_minimum_required(VERSION 2.8.3)
 project(motion_planning)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11 -Wall -O0)
+add_compile_options(-std=c++14 -Wall -O0)
 set(CMAKE_BUILD_TYPE "Debug")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
-
-set(PIECEWISE_DIR third_party/modules/planning/math/piecewise_jerk)
-
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -164,20 +161,43 @@ include_directories(
   ${GLOG_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
   third_party
+  /usr/include/eigen3
 
 )
 
 # include_directories(/home/fjw/OOQP/OOQP/include)
 # link_directories(/home/fjw/OOQP/OOQP/lib)
 
-add_library(piecewise_jerk_problem ${PIECEWISE_DIR}/piecewise_jerk_problem.cc)
-add_library(piecewise_jerk_speed_problem ${PIECEWISE_DIR}/piecewise_jerk_speed_problem.cc)
-target_link_libraries(piecewise_jerk_speed_problem piecewise_jerk_problem glog osqp::osqp)
+add_library(st_node third_party/st_node/st_node.cc)
+
+add_library(polynomialxd third_party/common/smoothing/polynomialxd.cc)
+
+add_library(spline1d_seg third_party/common/smoothing/spline1d_seg.cc)
+target_link_libraries(spline1d_seg polynomialxd)
+
+add_library(affine_constraint third_party/common/smoothing/affine_constraint.cc)
+
+add_library(spline1d_helper third_party/common/smoothing/spline1d_kernel_helper.cc)
+
+add_library(spline1d_kernel third_party/common/smoothing/spline1d_kernel.cc)
+target_link_libraries(spline1d_kernel spline1d_helper)
+
+add_library(spline1d_constraint third_party/common/smoothing/spline1d_constraint.cc)
+target_link_libraries(spline1d_constraint affine_constraint)
+
+add_library(spline1d third_party/common/smoothing/spline1d.cc)
+target_link_libraries(spline1d spline1d_seg)
+
+add_library(osqp_interface third_party/common/solver/osqp/osqp_interface.cc)
+target_link_libraries(osqp_interface osqp::osqp)
+
+add_library(osqp_spline1d_solver third_party/common/smoothing/osqp_spline1d_solver.cc)
+target_link_libraries(osqp_spline1d_solver spline1d_kernel spline1d_constraint spline1d osqp_interface)
 
 add_executable(${PROJECT_NAME}_node src/MotionPlanningNode.cpp)
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}_lib src/PjsoInterface.cc src/Shape.cc src/GaussianDistribution.cc src/LookUpTable.cc src/VelocityOptimization.cc src/StGraph.cc src/MotionPlanning.cpp src/VelocityPlanning.cpp src/PathGenerator.cpp src/PathUtilities.cpp src/DecisionMaking src/StateMaintaining.cpp src/Tools.cpp src/Visualization.cpp src/SubVehicle.cpp src/ObstacleAndRSS.cpp src/MessageConverter.cpp src/SpecialMotionPlanning.cpp src/LowSpeedMotionPlanning.cpp src/ReverseMotionPlanning.cpp src/RotateMotionPlanning.cpp)
+add_library(${PROJECT_NAME}_lib src/Shape.cc src/GaussianDistribution.cc src/LookUpTable.cc src/VelocityOptimization.cc src/StGraph.cc src/MotionPlanning.cpp src/VelocityPlanning.cpp src/PathGenerator.cpp src/PathUtilities.cpp src/DecisionMaking src/StateMaintaining.cpp src/Tools.cpp src/Visualization.cpp src/SubVehicle.cpp src/ObstacleAndRSS.cpp src/MessageConverter.cpp src/SpecialMotionPlanning.cpp src/LowSpeedMotionPlanning.cpp src/ReverseMotionPlanning.cpp src/RotateMotionPlanning.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -206,7 +226,8 @@ target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
   glog
   ${OpenCV_LIBS}
-  piecewise_jerk_speed_problem
+  st_node osqp_spline1d_solver
+
   # OsqpEigen::OsqpEigen
 
   # obstacle_utilities
@@ -217,7 +238,7 @@ target_link_libraries(${PROJECT_NAME}_node
   glog
   ${PROJECT_NAME}_lib
   ${OpenCV_LIBS}
-  piecewise_jerk_speed_problem
+  st_node osqp_spline1d_solver
   # OsqpEigen::OsqpEigen
   # ooqpgensparse 
   # ooqpsparse 

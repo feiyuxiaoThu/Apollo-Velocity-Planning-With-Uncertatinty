@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-24 09:03:09
+ * @LastEditTime: 2022-10-25 17:01:53
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -685,7 +685,7 @@ bool StGraph::runOnce(const std::vector<DecisionMaking::Obstacle>& obstacles, st
     // ~Stage I: add obstacles
     loadObstacles(obstacles);
 
-    // ~Stage: II: add acc limitation
+    // ~Stage II: add acc limitation
     loadAccelerationLimitation();
 
     // ~Stage II: generate cubes
@@ -738,7 +738,7 @@ Gaussian2D UncertaintyOccupiedArea::toPointGaussianDis(Eigen::Vector2d& vertice)
     return gaussian_dis;
 }
 
-bool UncertaintyStGraph::generateInitialCubePath(const std::vector<DecisionMaking::Obstacle>& obstacles, std::vector<std::vector<Cube2D<double>>>* cube_paths, std::vector<std::pair<double, double>>* s_range) {
+bool UncertaintyStGraph::ForwardSearch(const std::vector<DecisionMaking::Obstacle>& obstacles) {
     // ~Stage I: add obstacles
     loadUncertaintyObstacles(obstacles);
 
@@ -749,19 +749,118 @@ bool UncertaintyStGraph::generateInitialCubePath(const std::vector<DecisionMakin
     std::vector<std::vector<Cube2D<double>>> cubes;
     std::vector<std::pair<double, double>> last_s_range;
     bool is_generated_success = generateCubes(&cubes, &last_s_range);
+    generated_cubes_ = cubes;
     if (!is_generated_success) {
         return false;
     }
 
-    // ~Stage III: generate cube paths
-    std::vector<std::vector<Cube2D<double>>> connected_cube_paths;
-    bool is_connected_success = connectCubes(cubes, &connected_cube_paths);
-    if (!is_connected_success) {
-        return false;
+    // // ~Stage III: generate cube paths
+    // std::vector<std::vector<Cube2D<double>>> connected_cube_paths;
+    // bool is_connected_success = connectCubes(cubes, &connected_cube_paths);
+    // if (!is_connected_success) {
+    //     return false;
+    // }
+
+    // ~Stage IV: search st node
+    const int k = 13;
+    int num_a_per_side = static_cast<int>(k / 2.0);
+    std::vector<double> discrete_a;
+    discrete_a.reserve(k);
+    discrete_a.emplace_back(0.0);
+    for (int i = 0; i < num_a_per_side; ++i) {
+        discrete_a.emplace_back(a_max_ * (i + 1) / num_a_per_side);
+        discrete_a.emplace_back(a_min_ * (i + 1) / num_a_per_side);
     }
 
-    *cube_paths = connected_cube_paths;
-    *s_range = last_s_range;
+    GRIP::StNodeWeights weight;
+    // weight.control = 0.5;
+    weight.obstacle = 10;
+    weight.ref_v = 3;
+    GRIP::StNode::SetWeights(weight);
+
+    std::unique_ptr<GRIP::StNode> inital_node =
+        std::make_unique<GRIP::StNode>(init_s_[0], init_s_[1], init_s_[2]);
+    search_tree_.resize(9);
+    search_tree_[0].emplace_back(std::move(inital_node));
+
+    // LOG(INFO) << "[search tree] init velocity: " << init_s_[1];
+    // LOG(INFO) << "[search tree] reference velocity: "
+    // << StNode::reference_speed();
+
+
+    double t_expand = 0.0;
+    double t_sort = 0.0;
+    double t_compare = 0.0;
+    double kEpsilon = 0.1;
+
+    for (int i = 0; i < 8; ++i) {
+        std::vector<std::unique_ptr<GRIP::StNode>> cache;
+
+        for (int j = 0; j < search_tree_[i].size(); ++j) {
+        for (const auto& a : discrete_a) {
+            auto next_node = search_tree_[i][j]->Forward(1.0, a);
+            if (next_node->v < 0) continue;  // TODO: can optimize
+            for (int k = 1; k <= 5; ++k) {
+            next_node->CalObstacleCost(SignedDistance(
+                Eigen::Vector2d(search_tree_[i][j]->t + k / 5.0,
+                                search_tree_[i][j]->GetDistance(k / 5.0, a))));
+            }
+            if (next_node->cost < 1e9) {
+            cache.emplace_back(std::move(next_node));
+            }
+        }
+        }
+        std::sort(cache.begin(), cache.end(),
+                [](const std::unique_ptr<GRIP::StNode>& n1,
+                    const std::unique_ptr<GRIP::StNode>& n2) { return n1->s < n2->s; });
+
+        if (cache.empty()) {
+            std::cout << "cannot find valid path" << std::endl;
+            return false;
+        }
+
+        int min_index = 0;
+        int min_cost = cache[0]->cost;
+        double start_s = cache[0]->s;
+        bool is_new_group = false;
+
+        for (int j = 0; j < cache.size(); ++j) {
+        if (cache[j]->s - start_s <= kEpsilon) {
+            if (cache[j]->cost < min_cost) {
+            min_cost = cache[j]->cost;
+            min_index = j;
+            }
+        } else {
+            is_new_group = true;
+        }
+
+        if (is_new_group || j == cache.size() - 1) {
+            start_s = cache[j]->s;
+            search_tree_[i + 1].emplace_back(std::move(cache[min_index]));
+            min_index = j + 1;
+            is_new_group = false;
+        }
+        }
+
+        kEpsilon *= 1.3;
+    }
+    std::sort(
+        search_tree_.back().begin(), search_tree_.back().end(),
+        [](const std::unique_ptr<GRIP::StNode>& n1, const std::unique_ptr<GRIP::StNode>& n2) {
+            return n1->cost < n2->cost;
+        });
+
+    // extract answer
+    const GRIP::StNode* current_node = search_tree_.back().front().get();
+    st_nodes_.emplace_back(*current_node);
+    while (current_node->parent != nullptr) {
+        current_node = current_node->parent;
+        st_nodes_.emplace_back(*current_node);
+    }
+    std::reverse(st_nodes_.begin(), st_nodes_.end());
+
+
+
     return true;
 
 }
@@ -1093,6 +1192,107 @@ void UncertaintyStGraph::limitSingleBound(const Gaussian1D& line_gaussian_dis, c
     
 
 }
+
+// For GRIP
+double UncertaintyStGraph::SignedDistance(const Eigen::Vector2d& pos) {
+    
+    double res = static_cast<double>(1e5);
+    
+    // Traverse occupy area
+    for (const auto& occ_area : uncertainty_occupied_areas_) {
+        // Traverse vertex
+        for (int i = 0; i < 4; i++) {
+            Eigen::Vector2d cur_vertex = occ_area.vertex_[i % 4];
+            Eigen::Vector2d next_vertex = occ_area.vertex_[(i + 1) % 4];
+            PathPlanningUtilities::Point2f cur_point;
+            cur_point.x_ = cur_vertex(0);
+            cur_point.y_ = cur_vertex(1);
+            PathPlanningUtilities::Point2f next_point;
+            next_point.x_ = next_vertex(0);
+            next_point.y_ = next_vertex(1);
+
+            // Construct line
+            PathPlanningUtilities::LineSegment line = PathPlanningUtilities::LineSegment(cur_point, next_point);
+            double dis = line.pointToLineSegmentDistance(pos(0), pos(1));
+            res = std::min(res, dis);
+        }
+    }
+    return res;
+
+}
+
+bool UncertaintyStGraph::GenerateSpline() {
+    std::vector<double> lbs;
+    std::vector<double> ubs;
+    std::vector<double> refs;
+    double lb, ub;
+    for (const auto& node : st_nodes_) {
+        t_knots_.emplace_back(node.t);
+        bool is_valid = false;
+        for (int i = 0; i < generated_cubes_.size(); i++) {
+            double t_start = generated_cubes_[i][0].t_start_;
+            double t_end = generated_cubes_[i][0].t_end_;
+            if (node.t >= t_start && node.t <= t_end) {
+                for (int j = 0; i < generated_cubes_[i].size(); j++) {
+                    if (node.s >= generated_cubes_[i][j].s_start_ && node.s <= generated_cubes_[i][j].s_end_) {
+                        lb = generated_cubes_[i][j].s_start_;
+                        ub = generated_cubes_[i][j].s_end_;
+                        is_valid = true;
+                        break;
+                    }
+                }
+            }
+            if (is_valid) {
+                break;
+            }
+        }
+        lbs.emplace_back(lb);
+        ubs.emplace_back(ub);
+        refs.emplace_back(node.s);
+    }
+
+    // std::vector<double> t_samples, v_min, v_max, a_max, a_min;
+    // for (double t = t_knots_.front() + step_length_; t < t_knots_.back();
+    //     t += step_length_) {
+    //     int index = static_cast<int>(t);
+    //     double delta = t - st_nodes_[index].t;
+    //     double s = st_nodes_[index].s + st_nodes_[index].v * delta +
+    //             0.5 * st_nodes_[index + 1].a * delta * delta;
+    //     double max_abs_v =
+    //         1.2 * std::sqrt(lat_a_max_ / std::fabs(gp_path.GetCurvature(s)));
+    //     t_samples.emplace_back(t);
+    //     v_min.emplace_back(-max_abs_v);
+    //     v_max.emplace_back(max_abs_v);
+    //     a_min.emplace_back(a_min_);
+    //     a_max.emplace_back(a_max_);
+    // }
+
+    common::OsqpSpline1dSolver solver(t_knots_, 5);
+    auto kernel = solver.mutable_kernel();
+    kernel->AddRegularization(1e-5);
+    kernel->AddSecondOrderDerivativeMatrix(5);
+    kernel->AddThirdOrderDerivativeMatrix(20);
+    kernel->AddReferenceLineKernelMatrix(t_knots_, refs, 20);
+    auto constraint = solver.mutable_constraint();
+    constraint->AddThirdDerivativeSmoothConstraint();
+    constraint->AddPointConstraint(t_knots_.front(), init_s_[0]);
+    constraint->AddPointDerivativeConstraint(t_knots_.front(), init_s_[1]);
+    // constraint->AddPointSecondDerivativeConstraint(t_knots_.front(),
+    // init_s_[2]);
+    constraint->AddBoundary(t_knots_, lbs, ubs);
+    // constraint->AddDerivativeBoundary(t_samples, v_min, v_max);
+    // constraint->AddSecondDerivativeBoundary(t_samples, a_min, a_max);
+
+    if (!solver.Solve()) {
+        std::cout << "fail to optimize" << std::endl;
+        return false;
+    }
+
+    st_spline_ = solver.spline();
+
+    return true;
+}
+
 
 
 

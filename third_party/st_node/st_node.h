@@ -9,7 +9,7 @@
 
 #include <memory>
 
-namespace planning {
+namespace GRIP {
 
 struct StNodeWeights {
   double ref_v = 0.0;

@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:54:48
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-09-21 10:05:16
+ * @LastEditTime: 2022-10-25 17:08:28
  * @Description: s-t graph
  */
 
@@ -19,6 +19,8 @@
 #include "Path.hpp"
 #include "OccupyArea.hpp"
 #include "GaussianDistribution.hpp"
+#include "st_node/st_node.h"
+#include "common/smoothing/osqp_spline1d_solver.h"
 
 
 namespace VelocityPlanning {
@@ -240,8 +242,6 @@ class UncertaintyStGraph : public StGraph {
 
     using StGraph::StGraph;
 
-    bool generateInitialCubePath(const std::vector<DecisionMaking::Obstacle>& obstacles, std::vector<std::vector<Cube2D<double>>>* cube_paths, std::vector<std::pair<double, double>>* s_range);
-
     void loadUncertaintyObstacle(const DecisionMaking::Obstacle& uncertainty_obs);
 
     void loadUncertaintyObstacles(const std::vector<DecisionMaking::Obstacle>& uncertainty_obstacles);
@@ -269,6 +269,33 @@ class UncertaintyStGraph : public StGraph {
     std::vector<UncertaintyOccupiedArea> uncertainty_occupied_areas_;
 
     UncertaintyParam uncertainty_param_;
+
+    // For GRIP
+    
+    std::array<double, 3> init_s_;
+    double stamp_now_ = 0.0;
+    double ego_half_length_ = 0.0;
+    double safety_margin_ = 0.0;
+    double a_max_ = 2.0;
+    double a_min_ = -4.0;
+    const double lat_a_max_ = 4.0;
+
+    double max_arc_length_ = 0.0;
+    std::vector<std::vector<std::unique_ptr<GRIP::StNode>>> search_tree_;
+    std::vector<GRIP::StNode> st_nodes_;
+
+    const double step_length_ = 0.2;
+    std::vector<double> t_knots_;
+    common::Spline1d st_spline_;
+
+    std::vector<std::vector<Cube2D<double>>> generated_cubes_;
+
+    double SignedDistance(const Eigen::Vector2d& pos);
+
+    bool GenerateSpline();
+
+    bool ForwardSearch(const std::vector<DecisionMaking::Obstacle>& obstacles);
+
 
 }; 
 

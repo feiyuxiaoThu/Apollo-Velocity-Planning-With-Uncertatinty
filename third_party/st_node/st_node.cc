@@ -10,7 +10,7 @@
 #include <cmath>
 #include <limits>
 
-namespace planning {
+namespace GRIP {
 
 double StNode::ref_v_ = 0.0;
 StNodeWeights StNode::weights_;
