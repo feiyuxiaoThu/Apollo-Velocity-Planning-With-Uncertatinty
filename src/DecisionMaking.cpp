@@ -44,9 +44,9 @@ void DecisionMaking::SubVehicle::checkStates() {
     // right_lane_velocity_planning_thread.join();
 
     // // debug不使用线程
-    this->velocityPlanningForState(&(this->states_set_[StateNames::FORWARD]), obstacles, true);
-    this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_LEFT]), obstacles, true);
-    this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_RIGHT]), obstacles, true);
+    // this->velocityPlanningForState(&(this->states_set_[StateNames::FORWARD]), obstacles, true);
+    // this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_LEFT]), obstacles, true);
+    // this->velocityPlanningForState(&(this->states_set_[StateNames::TURN_RIGHT]), obstacles, true);
 
 
 
@@ -58,6 +58,7 @@ void DecisionMaking::SubVehicle::checkStates() {
     // std::cout << "DEBUG v size: " << states_set_[StateNames::FORWARD].v_.size() << std::endl;
     // std::cout << "DEBUG a size: " << states_set_[StateNames::FORWARD].a_.size() << std::endl;
     // Record time consumption
+
     clock_t start_time = clock();
     // VelocityPlanning::VelocityPlanner* v_planner_forward = new VelocityPlanning::VelocityPlanner(&(states_set_[StateNames::FORWARD]));
     std::shared_ptr<VelocityPlanning::VelocityPlanner> v_planner_forward = std::make_shared<VelocityPlanning::VelocityPlanner>(&(states_set_[StateNames::FORWARD]), st_graph_interface_pub_);

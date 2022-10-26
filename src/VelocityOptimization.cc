@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-25 17:07:12
+ * @LastEditTime: 2022-10-25 19:46:09
  * @Description: velocity optimization.
  */
 
@@ -1267,9 +1267,9 @@ VelocityPlanner::VelocityPlanner(DecisionMaking::StandardState* current_state) {
             // }
         }
 
-        // // DEBUG
-        // excess_limit = true;
-        // // END DEBUG
+        // DEBUG
+        excess_limit = true;
+        // END DEBUG
 
         if (!excess_limit) {
 
@@ -1355,8 +1355,9 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     //         valid_obstacles.emplace_back(obs);
     //     }
     // }
-
-    bool graph_success = st_graph_->ForwardSearch(obstacles);
+    const double max_speed = planning_state_->getVelocityLimitationMax();
+    st_graph_->init_s_ = start_state_;
+    bool graph_success = st_graph_->ForwardSearch(obstacles, max_speed);
     if (!graph_success) {
         planning_state_->setSafety(false);
         planning_state_->velocity_profile_generation_state_ = false;
@@ -1364,22 +1365,15 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
         return false;
     }
 
-    // Screen the cubes paths
-    // std::vector<Cube2D<double>> cube_path = Apollo::PjsoInterface::selectCubesPath(cube_paths);
+    // DEBUG
+    std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << std::endl;
+    std::cout << "st nodes size: " << st_graph_->st_nodes_.size() << std::endl;
+    for (int i = 0; i < st_graph_->st_nodes_.size(); i++) {
+        std::cout << "Node index: " << i << ", s: " << st_graph_->st_nodes_[i].s << ", v: " << st_graph_->st_nodes_[i].v << ", t: " << st_graph_->st_nodes_[i].t << std::endl;
 
-    // // ~Stage II: safety enhancement
-    // std::vector<std::vector<Cube2D<double>>> enhanced_cube_paths;
-    // bool enhancement_success = st_graph_->enhanceSafety(cube_paths, &enhanced_cube_paths);
-    // if (!enhancement_success) {
-    //     planning_state_->setSafety(false);
-    //     planning_state_->velocity_profile_generation_state_ = false;
-    //     std::cout << "State name: " << planning_state_->getStateName() << " is not safe due to safety enhancement failure." << std::endl;
-    //     return false;
-    // }
+    }
+    // END DEBUG
 
-    // // DEBUG
-    // st_graph_->visualization();
-    // // END DEBUG
 
     // ~Stage III: generate s-t parameters
     std::vector<double> s;
@@ -1394,20 +1388,19 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     printf("[VelocityPlanner] Planned state name: %s.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
     printf("[VelocityPlanner] Velocity range: %lf - %lf, acceleration range: %lf - %lf.\n", planning_state_->getVelocityLimitationMax(), planning_state_->getVelocityLimitationMin(), planning_state_->getAccelerationLimitationMax(), planning_state_->getAccelerationLimitationMin());
 
-    // Parse and handle parameters 
-    const double max_speed = planning_state_->getVelocityLimitationMax();
-    const double min_speed = planning_state_->getVelocityLimitationMin();
-    const double max_acceleration = planning_state_->getAccelerationLimitationMax();
-    const double min_acceleration = planning_state_->getAccelerationLimitationMin();
-    const double max_jerk = 5.0;
-    const double min_jerk = -5.0;
-    const double cruise_speed = (max_speed + start_state_[1]) / 2.0;
-    const double expected_acc = planning_state_->getVehicleDynamicPlanningExpectedAcceleration();
+    // // Parse and handle parameters 
+    // const double max_speed = planning_state_->getVelocityLimitationMax();
+    // const double min_speed = planning_state_->getVelocityLimitationMin();
+    // const double max_acceleration = planning_state_->getAccelerationLimitationMax();
+    // const double min_acceleration = planning_state_->getAccelerationLimitationMin();
+    // const double max_jerk = 5.0;
+    // const double min_jerk = -5.0;
+    // const double cruise_speed = (max_speed + start_state_[1]) / 2.0;
+    // const double expected_acc = planning_state_->getVehicleDynamicPlanningExpectedAcceleration();
 
 
     // bool velocity_profile_generation_state = Apollo::PjsoInterface::runOnce(start_state_, st_graph_->param_.s_max, max_speed, min_speed, max_acceleration, min_acceleration, max_jerk, min_jerk, cruise_speed, cube_path, expected_acc, &s, &v, &a, &t);
 
-    st_graph_->init_s_ = start_state_;
     bool spline_generation_success = st_graph_->GenerateSpline();
     if (!spline_generation_success) {
         planning_state_->setSafety(false);
@@ -1424,19 +1417,6 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
         t.push_back(cur_t);
     }
 
-
-    // if (!velocity_profile_generation_state) {
-
-    //     // DEBUG
-    //     std::cout << "********************************************" << std::endl;
-    //     std::cout << "PJSO failed due to optimization problem" << std::endl;
-    //     std::cout << "********************************************" << std::endl;
-    //     // END DEBUG
-
-    //     planning_state_->setSafety(false);
-    //     planning_state_->velocity_profile_generation_state_ = false;
-    //     return false;
-    // }
 
 
     // DEBUG

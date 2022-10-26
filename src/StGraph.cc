@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-25 17:01:53
+ * @LastEditTime: 2022-10-26 10:10:46
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -102,7 +102,7 @@ bool GridMap2D::expandSingleColumn(const int& grid_t_start, const int& grid_t_en
         if (collision_type == ValType::OCCUPIED) {
             // Complete the last round
             if (cur_s_grid > cur_s_start) {
-                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start, cur_s_grid);
+                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start - 1, cur_s_grid);
                 cube.upper_collision_type_ = CollisionType::ACCELERATION_BOUNDARY;
                 if (calculated_cubes.empty()) {
                     cube.lower_collision_type_ = CollisionType::ACCELERATION_BOUNDARY;
@@ -115,7 +115,7 @@ bool GridMap2D::expandSingleColumn(const int& grid_t_start, const int& grid_t_en
         } else if (collision_type == ValType::HALF_OCCUPIED) {
             // Complete the medium round
             if (cur_s_grid > cur_s_start) {
-                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start, cur_s_grid);
+                Cube2D<int> cube = Cube2D<int>(grid_t_start, grid_t_end, cur_s_start - 1, cur_s_grid);
                 cube.upper_collision_type_ = CollisionType::OBSTACLE_BOUNDARY;
                 if (calculated_cubes.empty()) {
                     cube.lower_collision_type_ = CollisionType::ACCELERATION_BOUNDARY;
@@ -738,7 +738,7 @@ Gaussian2D UncertaintyOccupiedArea::toPointGaussianDis(Eigen::Vector2d& vertice)
     return gaussian_dis;
 }
 
-bool UncertaintyStGraph::ForwardSearch(const std::vector<DecisionMaking::Obstacle>& obstacles) {
+bool UncertaintyStGraph::ForwardSearch(const std::vector<DecisionMaking::Obstacle>& obstacles, const double& max_velocity) {
     // ~Stage I: add obstacles
     loadUncertaintyObstacles(obstacles);
 
@@ -777,6 +777,7 @@ bool UncertaintyStGraph::ForwardSearch(const std::vector<DecisionMaking::Obstacl
     weight.obstacle = 10;
     weight.ref_v = 3;
     GRIP::StNode::SetWeights(weight);
+    GRIP::StNode::SetReferenceSpeed(max_velocity);
 
     std::unique_ptr<GRIP::StNode> inital_node =
         std::make_unique<GRIP::StNode>(init_s_[0], init_s_[1], init_s_[2]);
@@ -799,6 +800,11 @@ bool UncertaintyStGraph::ForwardSearch(const std::vector<DecisionMaking::Obstacl
         for (int j = 0; j < search_tree_[i].size(); ++j) {
         for (const auto& a : discrete_a) {
             auto next_node = search_tree_[i][j]->Forward(1.0, a);
+
+            // // DEBUG
+            // std::cout << "Next node s: " << next_node->s << ", v: " << next_node->v << ", a: " << next_node->a << ", t: " << next_node->t << ", cost: " << next_node->cost << std::endl;
+            // // END DEBUG
+
             if (next_node->v < 0) continue;  // TODO: can optimize
             for (int k = 1; k <= 5; ++k) {
             next_node->CalObstacleCost(SignedDistance(
@@ -1226,30 +1232,48 @@ bool UncertaintyStGraph::GenerateSpline() {
     std::vector<double> ubs;
     std::vector<double> refs;
     double lb, ub;
+
+    // DEBUG
+    for (int i = 0; i < generated_cubes_.size(); i++) {
+        for (int j = 0; j < generated_cubes_[i].size(); j++) {
+            std::cout << "i: " << i << ", j: " << j << std::endl;
+            generated_cubes_[i][j].print();
+        }
+    }
+    // END DEBUG
+
+
     for (const auto& node : st_nodes_) {
+        if (node.t > 5.0) {
+            break;
+        }
         t_knots_.emplace_back(node.t);
-        bool is_valid = false;
-        for (int i = 0; i < generated_cubes_.size(); i++) {
-            double t_start = generated_cubes_[i][0].t_start_;
-            double t_end = generated_cubes_[i][0].t_end_;
-            if (node.t >= t_start && node.t <= t_end) {
-                for (int j = 0; i < generated_cubes_[i].size(); j++) {
-                    if (node.s >= generated_cubes_[i][j].s_start_ && node.s <= generated_cubes_[i][j].s_end_) {
-                        lb = generated_cubes_[i][j].s_start_;
-                        ub = generated_cubes_[i][j].s_end_;
-                        is_valid = true;
-                        break;
-                    }
-                }
-            }
-            if (is_valid) {
+        int cube_time_index = std::round(node.t / 0.5);
+        cube_time_index = std::min(cube_time_index, static_cast<int>(generated_cubes_.size() - 1));
+        cube_time_index = std::max(cube_time_index, 0);
+
+        // DEBUG
+        std::cout << "cube time index: " << cube_time_index << std::endl;
+        // END DEBUG
+
+        for (int i = 0; i < generated_cubes_[cube_time_index].size(); i++) {
+            if (node.s + EPS >= generated_cubes_[cube_time_index][i].s_start_ && node.s <= generated_cubes_[cube_time_index][i].s_end_) {
+                lb = generated_cubes_[cube_time_index][i].s_start_;
+                ub = generated_cubes_[cube_time_index][i].s_end_;
                 break;
             }
         }
+
         lbs.emplace_back(lb);
         ubs.emplace_back(ub);
         refs.emplace_back(node.s);
     }
+
+    // DEBUG
+    for (int i = 0; i < refs.size(); i++) {
+        std::cout << "t: " << t_knots_[i] << ", ref s: " << refs[i] << ", lb: " << lbs[i] << ", ub: " << ubs[i] << std::endl;
+    }
+    // END DEBUG
 
     // std::vector<double> t_samples, v_min, v_max, a_max, a_min;
     // for (double t = t_knots_.front() + step_length_; t < t_knots_.back();

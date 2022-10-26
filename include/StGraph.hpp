@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:54:48
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-25 17:08:28
+ * @LastEditTime: 2022-10-26 09:32:49
  * @Description: s-t graph
  */
 
@@ -276,7 +276,7 @@ class UncertaintyStGraph : public StGraph {
     double stamp_now_ = 0.0;
     double ego_half_length_ = 0.0;
     double safety_margin_ = 0.0;
-    double a_max_ = 2.0;
+    double a_max_ = 1.8;
     double a_min_ = -4.0;
     const double lat_a_max_ = 4.0;
 
@@ -294,7 +294,7 @@ class UncertaintyStGraph : public StGraph {
 
     bool GenerateSpline();
 
-    bool ForwardSearch(const std::vector<DecisionMaking::Obstacle>& obstacles);
+    bool ForwardSearch(const std::vector<DecisionMaking::Obstacle>& obstacles, const double& max_velocity);
 
 
 }; 
