@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-26 10:10:46
+ * @LastEditTime: 2022-10-26 16:31:12
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -1275,21 +1275,20 @@ bool UncertaintyStGraph::GenerateSpline() {
     }
     // END DEBUG
 
-    // std::vector<double> t_samples, v_min, v_max, a_max, a_min;
-    // for (double t = t_knots_.front() + step_length_; t < t_knots_.back();
-    //     t += step_length_) {
-    //     int index = static_cast<int>(t);
-    //     double delta = t - st_nodes_[index].t;
-    //     double s = st_nodes_[index].s + st_nodes_[index].v * delta +
-    //             0.5 * st_nodes_[index + 1].a * delta * delta;
-    //     double max_abs_v =
-    //         1.2 * std::sqrt(lat_a_max_ / std::fabs(gp_path.GetCurvature(s)));
-    //     t_samples.emplace_back(t);
-    //     v_min.emplace_back(-max_abs_v);
-    //     v_max.emplace_back(max_abs_v);
-    //     a_min.emplace_back(a_min_);
-    //     a_max.emplace_back(a_max_);
-    // }
+    std::vector<double> t_samples, v_min, v_max, a_max, a_min;
+    for (double t = t_knots_.front() + step_length_; t < t_knots_.back();
+        t += step_length_) {
+        int index = static_cast<int>(t);
+        double delta = t - st_nodes_[index].t;
+        double s = st_nodes_[index].s + st_nodes_[index].v * delta +
+                0.5 * st_nodes_[index + 1].a * delta * delta;
+        double max_abs_v = GRIP::StNode::reference_speed();
+        t_samples.emplace_back(t);
+        v_min.emplace_back(-max_abs_v);
+        v_max.emplace_back(max_abs_v);
+        a_min.emplace_back(a_min_);
+        a_max.emplace_back(a_max_);
+    }
 
     common::OsqpSpline1dSolver solver(t_knots_, 5);
     auto kernel = solver.mutable_kernel();
@@ -1301,11 +1300,10 @@ bool UncertaintyStGraph::GenerateSpline() {
     constraint->AddThirdDerivativeSmoothConstraint();
     constraint->AddPointConstraint(t_knots_.front(), init_s_[0]);
     constraint->AddPointDerivativeConstraint(t_knots_.front(), init_s_[1]);
-    // constraint->AddPointSecondDerivativeConstraint(t_knots_.front(),
-    // init_s_[2]);
+    constraint->AddPointSecondDerivativeConstraint(t_knots_.front(),init_s_[2]);
     constraint->AddBoundary(t_knots_, lbs, ubs);
-    // constraint->AddDerivativeBoundary(t_samples, v_min, v_max);
-    // constraint->AddSecondDerivativeBoundary(t_samples, a_min, a_max);
+    constraint->AddDerivativeBoundary(t_samples, v_min, v_max);
+    constraint->AddSecondDerivativeBoundary(t_samples, a_min, a_max);
 
     if (!solver.Solve()) {
         std::cout << "fail to optimize" << std::endl;
