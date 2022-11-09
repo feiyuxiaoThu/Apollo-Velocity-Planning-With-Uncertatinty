@@ -504,8 +504,10 @@ void VisualizationMethods::visualizeObstacles(const std::vector<DecisionMaking::
     }
     // 然后是障碍物的速度
     for (size_t i = 0; i < obstacles.size(); i++) {
-        obstacle_marker_array.markers.push_back(visualizeObstacleVelocity(obstacles[i], count));
-        count++;
+        if (obstacles[i].getObstacleVelocity() >= 0.5) {
+            obstacle_marker_array.markers.push_back(visualizeObstacleVelocity(obstacles[i], count));
+            count++;
+        }
     }
     // 最后是障碍物轨迹
     for (size_t i = 0; i < obstacles.size(); i++) {
