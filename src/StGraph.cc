@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-18 14:56:30
+ * @LastEditTime: 2022-11-17 09:30:15
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -1084,8 +1084,14 @@ void UncertaintyStGraph::limitSingleBound(const Gaussian1D& line_gaussian_dis, c
         double start_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(start_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
         double end_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(end_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
 
+        // Chance constarint buffer
         if ((rel_pos_type == SRelativePositionType::ABOVE && bound_type == BoundType::UPPER) || (rel_pos_type == SRelativePositionType::BELOW && bound_type == BoundType::LOWER)) {
             buffer_value = std::max({buffer_value, start_diff_gaussian_res_buffer, end_diff_gaussian_res_buffer});
+        }
+
+        // Vehicle length
+        if (rel_pos_type == SRelativePositionType::ABOVE && bound_type == BoundType::UPPER) {
+            buffer_value += param_.vehicle_head_to_rear_axis;
         }
 
         // // DEBUG
