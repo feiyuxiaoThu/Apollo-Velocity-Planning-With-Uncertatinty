@@ -303,7 +303,13 @@ void DecisionMaking::SubVehicle::chooseStates() {
                 lane_changing_state_ = StateNames::UNKNOWN;
             } else {
                 // Reset the priority to held the previous lane changing process
-                states_set_[lane_changing_state_].setPriority(states_set_[lane_changing_state_].getPriority() + 20.0);
+                double new_priority = states_set_[lane_changing_state_].getPriority() + 20.0;
+                if (new_priority < states_set_[StateNames::FORWARD].getPriority()) {
+                    // End the previous lane changing behavior since the forward state has a much larger priority
+                    is_lane_changing_ = false;
+                    lane_changing_state_ = StateNames::UNKNOWN;
+                }
+                states_set_[lane_changing_state_].setPriority(new_priority);
             }
 
         }
