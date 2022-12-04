@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-10-11 10:24:52
+ * @LastEditTime: 2022-12-04 20:14:55
  * @Description: velocity optimization.
  */
 
@@ -701,21 +701,19 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
     int s_sampling_number = static_cast<int>(optimization_maximum_number / available_cube_paths_num);
 
     // ~Stage II: sampling s with a fixed interval
-    double s_available_range = last_s_range.back().second - last_s_range.front().first;
-    double s_start = last_s_range.front().first;
-    double s_end = last_s_range.back().second;
-    double s_interval = s_available_range / static_cast<double>(s_sampling_number - 1);
-    std::vector<double> sampled_s;
-    while (s_start <= s_end) {
-        sampled_s.emplace_back(s_start);
-        s_start += s_interval;
-    }
-    std::reverse(sampled_s.begin(), sampled_s.end());
+    // double s_available_range = last_s_range.back().second - last_s_range.front().first;
+    // double s_start = last_s_range.front().first;
+    // double s_end = last_s_range.back().second;
+    // double s_interval = s_available_range / static_cast<double>(s_sampling_number - 1);
+    // std::vector<double> sampled_s;
+    // while (s_start <= s_end) {
+    //     sampled_s.emplace_back(s_start);
+    //     s_start += s_interval;
+    // }
+    // std::reverse(sampled_s.begin(), sampled_s.end());
 
     // ~Stage III: optimization
-    int n = cube_paths.size() * sampled_s.size();
-
-
+    int n = available_cube_paths_num * s_sampling_number;
     ss_.resize(n);
     tt_.resize(n);
     ress_.resize(n, false);
@@ -724,9 +722,22 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
     // std::vector<std::thread> thread_set(cube_paths.size() * sampled_s.size());
 
     for (int i = 0; i < cube_paths.size(); i++) {
+        // Sampling s range
+        double s_available_range = cube_paths[i].back().s_end_ - cube_paths[i].back().s_start_;
+        double s_start = cube_paths[i].back().s_start_;
+        double s_end = cube_paths[i].back().s_end_;
+        double sampling_s_interval = s_available_range / static_cast<double>(s_sampling_number - 1);
+        std::vector<double> sampled_s;
+        while (s_start <= s_end) {
+            sampled_s.emplace_back(s_start);
+            s_start += sampling_s_interval;
+        }
+        std::reverse(sampled_s.begin(), sampled_s.end());
+
+        // Optimization
         int optimization_success_num_current_cube_path = 0;
         for (int j = 0; j < sampled_s.size(); j++) {
-            int index = i * sampled_s.size() + j;
+            int index = i * s_sampling_number + j;
             runSingleCubesPath(cube_paths[i], start_state, sampled_s[j], max_velocity, min_velocity, max_acceleration, min_acceleration, index);
             if (ress_[index]) {
                 optimization_success_num_current_cube_path += 1;
