@@ -168,6 +168,8 @@ class SubVehicle{
     // 启动ros订阅线程,50hz
     void listenRosMSGThread();
 
+    void laneChangingHelperThread();
+
     // 更新车辆位置信息，ros节点
     void updateVehiclePosition(const nav_msgs::Odometry::ConstPtr odometry_msg);
 
@@ -431,6 +433,12 @@ class SubVehicle{
     std::mutex emergency_break_flag_mutex_;  // 紧急停车锁
     std::mutex history_curve_mutex_;  // 历史路径锁
     std::mutex control_finished_flag_mutex_;  // 控制完成标志位锁
+
+    // For overtake
+    bool is_lane_changing_ = false;
+    Lane lane_changing_current_lane_;
+    Lane lane_changing_target_lane_;
+    StateNames lane_changing_state_{StateNames::UNKNOWN};
 };
 
 namespace RSS {

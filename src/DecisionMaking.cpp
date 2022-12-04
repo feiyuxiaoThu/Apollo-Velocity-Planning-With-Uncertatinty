@@ -289,6 +289,26 @@ void DecisionMaking::SubVehicle::chooseStates() {
     std::cout << "left state capability is " << this->states_set_[StateNames::TURN_LEFT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_LEFT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_LEFT].getPriority() << std::endl;
     std::cout << "right state capability is " << this->states_set_[StateNames::TURN_RIGHT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_RIGHT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_RIGHT].getPriority() << std::endl;
 
+    // Adjust the priority due to the previous lane changing process (is in process)
+    if (is_lane_changing_) {
+        if (lane_changing_state_ == StateNames::UNKNOWN) {
+            // Flags error, reset flags
+            is_lane_changing_ = false;
+            lane_changing_state_ = StateNames::UNKNOWN;
+        } else {
+            // Check the safety and priority of the previous lane changing state
+            if (!states_set_[lane_changing_state_].getCapability() || !states_set_[lane_changing_state_].getSafety()) {
+                // End the previous lane changing behavior
+                is_lane_changing_ = false;
+                lane_changing_state_ = StateNames::UNKNOWN;
+            } else {
+                // Reset the priority to held the previous lane changing process
+                states_set_[lane_changing_state_].setPriority(states_set_[lane_changing_state_].getPriority() + 20.0);
+            }
+
+        }
+    }
+
     // 构建可选状态列表，包含三大状态
     std::vector<DecisionMaking::StandardState> availiable_states_set;
     availiable_states_set.push_back(this->states_set_[StateNames::FORWARD]);

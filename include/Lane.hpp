@@ -159,6 +159,13 @@ class Lane{
         return index;
     }
 
+    // Calculate the distance from a point to the lane
+    double calculateNearestDistanceFromPoint(double position_x, double position_y) const {
+        size_t nearest_idx = findCurrenPositionIndexInLane(position_x, position_y);
+        double dis = sqrt(pow(position_x - lane_coorination_[nearest_idx].worldpos_.position_.x_, 2) + pow(position_y - lane_coorination_[nearest_idx].worldpos_.position_.y_, 2));
+        return dis;
+    }
+
     void setTurn(int turn) {
         this->turn_ = turn;
     }

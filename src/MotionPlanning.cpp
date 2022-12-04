@@ -214,6 +214,7 @@ void DecisionMaking::SubVehicle::updateMapInformation() {
         // 确定引导道路类型
         this->guidance_type_ = map_service.response.guidance;
         LOG(INFO) << "guided type: "<< this->guidance_type_;
+        std::cout  << "guided type: "<< this->guidance_type_ << std::endl;
         // std::cout << "guided type raw: "<< Lane::GuidanceType::ALL_AVAILABLE << std::endl;
         if (this->guidance_type_ == Lane::GuidanceType::CHANGE_LEFT) {
             this->right_lane_.disable();

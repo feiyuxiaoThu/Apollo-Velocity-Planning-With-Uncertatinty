@@ -37,7 +37,8 @@ enum StateNames {
     AVOIDANCE = 4,
     REVERSE = 5,
     ROTATE = 6,
-    STATE_SIZE = 7
+    STATE_SIZE = 7,
+    UNKNOWN = 8
 };
 
 // 定义特殊状态名称
