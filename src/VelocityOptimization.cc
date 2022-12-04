@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-04 20:14:55
+ * @LastEditTime: 2022-12-04 21:03:58
  * @Description: velocity optimization.
  */
 
@@ -137,11 +137,11 @@ void OsqpOptimizationInterface::calculateConstraintsMatrix(const std::vector<dou
     lower_bounds_vec(iter) = start_state[1] * start_cube_time_span;
     upper_bounds_vec(iter) = start_state[1] * start_cube_time_span;
     iter += 1;
-    // Supply start point acceleration constraint
-    constraints_matrix(iter, 0) = 20.0, constraints_matrix(iter, 1) = -40.0, constraints_matrix(iter, 2) = 20.0;
-    lower_bounds_vec(iter) = start_state[2] * start_cube_time_span;
-    upper_bounds_vec(iter) = start_state[2] * start_cube_time_span;
-    iter += 1;
+    // // Supply start point acceleration constraint
+    // constraints_matrix(iter, 0) = 20.0, constraints_matrix(iter, 1) = -40.0, constraints_matrix(iter, 2) = 20.0;
+    // lower_bounds_vec(iter) = start_state[2] * start_cube_time_span;
+    // upper_bounds_vec(iter) = start_state[2] * start_cube_time_span;
+    // iter += 1;
 
     // ~Stage III: supply unequal constraints 
     for (int i = 1; i < unequal_constraints[0].size(); i++) {
@@ -1052,20 +1052,20 @@ std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<do
     }
 
 
-    // Supply acceleration constraints
-    for (int i = 0; i < n; i++) {
-        int current_cube_start_index = i * 6;
-        double time_span = cube_path[i].t_end_ - cube_path[i].t_start_;
-        for (int j = current_cube_start_index; j < current_cube_start_index + 4; j++) {
-            std::vector<double> current_acceleratrion_constraints_coefficients(variables_num, 0.0);
-            current_acceleratrion_constraints_coefficients[j] = 20.0;
-            current_acceleratrion_constraints_coefficients[j + 1] = -40.0;
-            current_acceleratrion_constraints_coefficients[j + 2] = 20.0;
-            upper_boundaries.emplace_back(max_acceleration * time_span);
-            lower_boundaries.emplace_back(min_acceleration * time_span);
-            coefficients.emplace_back(current_acceleratrion_constraints_coefficients);
-        }
-    }
+    // // Supply acceleration constraints
+    // for (int i = 0; i < n; i++) {
+    //     int current_cube_start_index = i * 6;
+    //     double time_span = cube_path[i].t_end_ - cube_path[i].t_start_;
+    //     for (int j = current_cube_start_index; j < current_cube_start_index + 4; j++) {
+    //         std::vector<double> current_acceleratrion_constraints_coefficients(variables_num, 0.0);
+    //         current_acceleratrion_constraints_coefficients[j] = 20.0;
+    //         current_acceleratrion_constraints_coefficients[j + 1] = -40.0;
+    //         current_acceleratrion_constraints_coefficients[j + 2] = 20.0;
+    //         upper_boundaries.emplace_back(max_acceleration * time_span);
+    //         lower_boundaries.emplace_back(min_acceleration * time_span);
+    //         coefficients.emplace_back(current_acceleratrion_constraints_coefficients);
+    //     }
+    // }
 
     std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>> polynomial_unequal_constraints = std::make_tuple(coefficients, lower_boundaries, upper_boundaries);
 
