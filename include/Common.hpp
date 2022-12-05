@@ -168,7 +168,7 @@ class SubVehicle{
     // 启动ros订阅线程,50hz
     void listenRosMSGThread();
 
-    void laneChangingHelperThread();
+    // void laneChangingHelperThread();
 
     // 更新车辆位置信息，ros节点
     void updateVehiclePosition(const nav_msgs::Odometry::ConstPtr odometry_msg);

@@ -27,43 +27,43 @@ void DecisionMaking::SubVehicle::runMotionPlanning() {
     motion_planning_thread.join();
 }
 
-void DecisionMaking::SubVehicle::laneChangingHelperThread() {
-    // TODO: update two flags
-    // The first is whether in lane changing
-    // The second is the whether the lane changing behavior is done
-    // This operation will store the reference lane information,
-    // combined with the localization information to judge whether the lane changing behavior is done,
-    // if it is done, the lane changing flag will be set to false
+// void DecisionMaking::SubVehicle::laneChangingHelperThread() {
+//     // TODO: update two flags
+//     // The first is whether in lane changing
+//     // The second is the whether the lane changing behavior is done
+//     // This operation will store the reference lane information,
+//     // combined with the localization information to judge whether the lane changing behavior is done,
+//     // if it is done, the lane changing flag will be set to false
     
-    if (!is_lane_changing_) {
-        // Not in lane changing process, do nothing
-        return;
-    }
+//     if (!is_lane_changing_) {
+//         // Not in lane changing process, do nothing
+//         return;
+//     }
 
-    // Update location, velocity, and acceleration
-    PathPlanningUtilities::VehicleState current_position_in_world;
-    current_vehicle_world_position_mutex_.lock();
-    current_position_in_world = current_vehicle_world_position_;
-    current_vehicle_world_position_mutex_.unlock();
-    PathPlanningUtilities::VehicleMovementState current_movement_state;
-    current_vehicle_movement_mutex_.lock();
-    current_movement_state = current_vehicle_movement_;
-    current_vehicle_movement_mutex_.unlock();
-    current_vehicle_kappa_mutex_.lock();
-    double current_vehicle_kappa = current_vehicle_kappa_;
-    current_position_in_world.kappa_ = current_vehicle_kappa;
-    current_vehicle_kappa_mutex_.unlock();
+//     // Update location, velocity, and acceleration
+//     PathPlanningUtilities::VehicleState current_position_in_world;
+//     current_vehicle_world_position_mutex_.lock();
+//     current_position_in_world = current_vehicle_world_position_;
+//     current_vehicle_world_position_mutex_.unlock();
+//     PathPlanningUtilities::VehicleMovementState current_movement_state;
+//     current_vehicle_movement_mutex_.lock();
+//     current_movement_state = current_vehicle_movement_;
+//     current_vehicle_movement_mutex_.unlock();
+//     current_vehicle_kappa_mutex_.lock();
+//     double current_vehicle_kappa = current_vehicle_kappa_;
+//     current_position_in_world.kappa_ = current_vehicle_kappa;
+//     current_vehicle_kappa_mutex_.unlock();
 
-    // Calculate the distance from the current position to the lane changing start lane and lane changing target lane
-    double dis_to_lane_changing_start_lane = lane_changing_current_lane_.calculateNearestDistanceFromPoint(current_position_in_world.position_.x_, current_position_in_world.position_.y_);
-    double dis_to_lane_changing_end_lane = lane_changing_target_lane_.calculateNearestDistanceFromPoint(current_position_in_world.position_.x_, current_position_in_world.position_.y_);
+//     // Calculate the distance from the current position to the lane changing start lane and lane changing target lane
+//     double dis_to_lane_changing_start_lane = lane_changing_current_lane_.calculateNearestDistanceFromPoint(current_position_in_world.position_.x_, current_position_in_world.position_.y_);
+//     double dis_to_lane_changing_end_lane = lane_changing_target_lane_.calculateNearestDistanceFromPoint(current_position_in_world.position_.x_, current_position_in_world.position_.y_);
     
-    // Judge whether the lane changing process has been completed
-    if (dis_to_lane_changing_start_lane > dis_to_lane_changing_end_lane && dis_to_lane_changing_end_lane <= 0.2) {
-        is_lane_changing_ = false;
-        lane_changing_state_ = StateNames::UNKNOWN;
-    }
-}
+//     // Judge whether the lane changing process has been completed
+//     if (dis_to_lane_changing_start_lane > dis_to_lane_changing_end_lane && dis_to_lane_changing_end_lane <= 0.2) {
+//         is_lane_changing_ = false;
+//         lane_changing_state_ = StateNames::UNKNOWN;
+//     }
+// }
 
 // 状态机初始化
 void DecisionMaking::SubVehicle::initVehicleStates() {

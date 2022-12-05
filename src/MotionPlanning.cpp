@@ -222,6 +222,23 @@ void DecisionMaking::SubVehicle::updateMapInformation() {
             this->left_lane_.disable();
         }
 
+
+        // // DEBUG
+        // std::cout << "************************************************" << std::endl;
+        // std::cout << "map service response is lane changed: " << static_cast<size_t>(map_service.response.is_lane_changed) << std::endl;
+        // std::cout << "************************************************" << std::endl;
+        // std::cout << "#####################################################" << std::endl;
+        // std::cout << "is lane changing: " << is_lane_changing_ << std::endl;
+        // std::cout << "#####################################################" << std::endl;
+        // // END DEBUG
+        
+        // Judge whether lane changing has been completed
+        if (is_lane_changing_) {
+            if (map_service.response.is_lane_changed) {
+                is_lane_changing_ = false;
+            }
+        }
+
         // 设置道路优先级
         // 确定中间道的优先级
         switch (this->guidance_type_) {
