@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-04 21:03:58
+ * @LastEditTime: 2022-12-07 09:50:32
  * @Description: velocity optimization.
  */
 
@@ -693,7 +693,7 @@ VelocityOptimizer::VelocityOptimizer() = default;
 
 VelocityOptimizer::~VelocityOptimizer() = default;
 
-bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& cube_paths, const std::array<double, 3>& start_state, std::vector<std::pair<double, double>>& last_s_range, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, const int& final_s_sampled_num, std::vector<double>* s, std::vector<double>* t) {
+bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& cube_paths, const std::array<double, 3>& start_state, std::vector<std::pair<double, double>>& last_s_range, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, const int& final_s_sampled_num, const bool& with_acc_constraints, std::vector<double>* s, std::vector<double>* t) {
 
     // ~Stage I: determine the s sampling number due to the number of the available paths
     int available_cube_paths_num = cube_paths.size();
@@ -738,7 +738,7 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
         int optimization_success_num_current_cube_path = 0;
         for (int j = 0; j < sampled_s.size(); j++) {
             int index = i * s_sampling_number + j;
-            runSingleCubesPath(cube_paths[i], start_state, sampled_s[j], max_velocity, min_velocity, max_acceleration, min_acceleration, index);
+            runSingleCubesPath(cube_paths[i], start_state, sampled_s[j], max_velocity, min_velocity, max_acceleration, min_acceleration, index, with_acc_constraints);
             if (ress_[index]) {
                 optimization_success_num_current_cube_path += 1;
             }
@@ -835,7 +835,7 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
 
 }
 
-void VelocityOptimizer::runSingleCubesPath(const std::vector<Cube2D<double>>& cube_path, const std::array<double, 3>& start_state, const double& end_s, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, int index) {
+void VelocityOptimizer::runSingleCubesPath(const std::vector<Cube2D<double>>& cube_path, const std::array<double, 3>& start_state, const double& end_s, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, int index, bool with_acc_constraints) {
 
     Cube2D<double> last_cube = cube_path.back();
     if (end_s > last_cube.s_end_ || end_s < last_cube.s_start_) {
@@ -880,7 +880,7 @@ void VelocityOptimizer::runSingleCubesPath(const std::vector<Cube2D<double>>& cu
     std::vector<std::vector<double>> equal_constraints = generateEqualConstraints(cube_path);
 
     // ~Stage IV: calculate polynomial inequality constraints
-    std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>> polynomial_unequal_constraints = generatePolynimalUnequalConstraints(cube_path, start_state[1], max_velocity, min_velocity, max_acceleration, min_acceleration);
+    std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>> polynomial_unequal_constraints = generatePolynimalUnequalConstraints(cube_path, start_state[1], max_velocity, min_velocity, max_acceleration, min_acceleration, with_acc_constraints);
 
 
 
@@ -1004,7 +1004,7 @@ std::vector<std::vector<double>> VelocityOptimizer::generateEqualConstraints(con
     return equal_constraints;
 }
 
-std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>> VelocityOptimizer::generatePolynimalUnequalConstraints(const std::vector<Cube2D<double>>& cube_path, const double& start_velocity, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration) {
+std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>> VelocityOptimizer::generatePolynimalUnequalConstraints(const std::vector<Cube2D<double>>& cube_path, const double& start_velocity, const double& max_velocity, const double& min_velocity, const double& max_acceleration, const double& min_acceleration, bool with_acc_constraints) {
     // Initialize
     int variables_num = static_cast<int>(cube_path.size()) * 6;
     int n = static_cast<int>(cube_path.size());
@@ -1051,21 +1051,24 @@ std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<do
 
     }
 
+    if (with_acc_constraints) {
+        // Supply acceleration constraints
+        for (int i = 0; i < n; i++) {
+            int current_cube_start_index = i * 6;
+            double time_span = cube_path[i].t_end_ - cube_path[i].t_start_;
+            for (int j = current_cube_start_index; j < current_cube_start_index + 4; j++) {
+                std::vector<double> current_acceleratrion_constraints_coefficients(variables_num, 0.0);
+                current_acceleratrion_constraints_coefficients[j] = 20.0;
+                current_acceleratrion_constraints_coefficients[j + 1] = -40.0;
+                current_acceleratrion_constraints_coefficients[j + 2] = 20.0;
+                upper_boundaries.emplace_back(max_acceleration * time_span);
+                lower_boundaries.emplace_back(min_acceleration * time_span);
+                coefficients.emplace_back(current_acceleratrion_constraints_coefficients);
+            }
+        }
+    }
 
-    // // Supply acceleration constraints
-    // for (int i = 0; i < n; i++) {
-    //     int current_cube_start_index = i * 6;
-    //     double time_span = cube_path[i].t_end_ - cube_path[i].t_start_;
-    //     for (int j = current_cube_start_index; j < current_cube_start_index + 4; j++) {
-    //         std::vector<double> current_acceleratrion_constraints_coefficients(variables_num, 0.0);
-    //         current_acceleratrion_constraints_coefficients[j] = 20.0;
-    //         current_acceleratrion_constraints_coefficients[j + 1] = -40.0;
-    //         current_acceleratrion_constraints_coefficients[j + 2] = 20.0;
-    //         upper_boundaries.emplace_back(max_acceleration * time_span);
-    //         lower_boundaries.emplace_back(min_acceleration * time_span);
-    //         coefficients.emplace_back(current_acceleratrion_constraints_coefficients);
-    //     }
-    // }
+
 
     std::tuple<std::vector<std::vector<double>>, std::vector<double>, std::vector<double>> polynomial_unequal_constraints = std::make_tuple(coefficients, lower_boundaries, upper_boundaries);
 
@@ -1414,8 +1417,15 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
         final_s_sampled_num = 10;
     }
 
+    bool with_acc_boundary_constraints;
+    if (planning_state_->getStateName() == DecisionMaking::StateNames::FORWARD) {
+        with_acc_boundary_constraints = false;
+    } else {
+        with_acc_boundary_constraints = true;
+    }
+    
     velocity_optimizer_ = new VelocityPlanning::VelocityOptimizer();
-    bool optimization_success = velocity_optimizer_->runOnce(enhanced_cube_paths, start_state_, last_s_range, max_speed, min_speed, max_acc, min_acc, final_s_sampled_num, &s, &t);
+    bool optimization_success = velocity_optimizer_->runOnce(enhanced_cube_paths, start_state_, last_s_range, max_speed, min_speed, max_acc, min_acc, final_s_sampled_num, with_acc_boundary_constraints, &s, &t);
 
     if (optimization_success) {
         // std::cout << "Velocity profile generation success." << std::endl;
