@@ -326,6 +326,7 @@ void DecisionMaking::SubVehicle::chooseStates() {
         std::cout << "no state is capable and safety, enter low velocity states" << std::endl;
         LOG(INFO) << "no state is capable and safety, enter low velocity states";
         // 如果所有状态都不可行或不安全，进入低速机动模式(包括蔽障和停车)
+        is_lane_changing_ = false;
         this->generateLowVelocityState();
         // 临时将期望状态指定为选中状态以便调试（TOFIX）
         this->expected_state_ = this->states_set_[StateNames::FORWARD];
@@ -430,6 +431,8 @@ void DecisionMaking::SubVehicle::chooseStates() {
         } else {
             assert(false);
         }
+
+        current_state_ = choosed_state_;
 
     
     } else if (this->choosed_state_.getStateName() == StateNames::AVOIDANCE){
