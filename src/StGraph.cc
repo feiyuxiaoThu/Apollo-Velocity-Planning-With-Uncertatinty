@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-11-17 09:30:15
+ * @LastEditTime: 2022-12-12 12:01:47
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -623,6 +623,9 @@ bool StGraph::isCubesConnected(const Cube2D<double>& cube_1, const Cube2D<double
     // END DEBUG
 
     if (cube_1.s_start_ > cube_2.s_end_ || cube_2.s_start_ > cube_1.s_end_) {
+        return false;
+    }
+    if (cube_1.s_end_ - cube_1.s_start_ < param_.vehicle_head_to_rear_axis || cube_2.s_end_ - cube_2.s_start_ < param_.vehicle_head_to_rear_axis) {
         return false;
     }
     return true;
