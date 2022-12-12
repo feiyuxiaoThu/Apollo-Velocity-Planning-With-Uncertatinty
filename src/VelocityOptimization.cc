@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-12 11:56:01
+ * @LastEditTime: 2022-12-12 12:24:04
  * @Description: velocity optimization.
  */
 
@@ -734,6 +734,11 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
         }
         std::reverse(sampled_s.begin(), sampled_s.end());
 
+        if (static_cast<int>(sampled_s.size()) != s_sampling_number) {
+            printf("[VelocityOptimizer] sampling error! s available range: %lf, s start: %lf, s end: %lf, sampling s interval: %lf, s sampling number: %lf, sampled s size: %d", s_available_range, s_start, s_end, sampling_s_interval, s_sampling_number, static_cast<int>(sampled_s.size()));
+            assert(false);
+        }
+
         // Optimization
         int optimization_success_num_current_cube_path = 0;
         for (int j = 0; j < sampled_s.size(); j++) {
@@ -1401,14 +1406,12 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     // std::cout << "Max acceleration: " << planning_state_->getAccelerationLimitationMax() << ", min acceleration: " << planning_state_->getAccelerationLimitationMin() << std::endl;
 
     double max_speed = planning_state_->getVelocityLimitationMax();
-    double min_speed = planning_state_->getVelocityLimitationMin();
+    double min_speed = 0.0;
     double max_acc = planning_state_->getAccelerationLimitationMax();
     double min_acc = planning_state_->getAccelerationLimitationMin();
 
-    min_speed = 0.0;
-
     printf("[VelocityPlanner] Planned state name: %s.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
-    printf("[VelocityPlanner] Velocity range: %lf - %lf, acceleration range: %lf - %lf.\n", max_speed, min_speed, max_acc, min_acc);
+    printf("[VelocityPlanner] Velocity range: %lf -- %lf, acceleration range: %lf -- %lf.\n", max_speed, min_speed, max_acc, min_acc);
 
     int final_s_sampled_num = 0;
     if (planning_state_->getStateName() == DecisionMaking::StateNames::FORWARD) {
