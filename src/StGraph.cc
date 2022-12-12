@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-12 12:01:47
+ * @LastEditTime: 2022-12-12 12:10:35
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -625,9 +625,6 @@ bool StGraph::isCubesConnected(const Cube2D<double>& cube_1, const Cube2D<double
     if (cube_1.s_start_ > cube_2.s_end_ || cube_2.s_start_ > cube_1.s_end_) {
         return false;
     }
-    if (cube_1.s_end_ - cube_1.s_start_ < param_.vehicle_head_to_rear_axis || cube_2.s_end_ - cube_2.s_start_ < param_.vehicle_head_to_rear_axis) {
-        return false;
-    }
     return true;
 
 }
@@ -996,6 +993,10 @@ bool UncertaintyStGraph::checkSingleCubesPathContinuity(const std::vector<Cube2D
         if (!isCubesConnected(cubes_path[i], cubes_path[i + 1])) {
             return false;
         }
+    }
+    // Check last cube s range
+    if (cubes_path.back().s_end_ - cubes_path.back().s_start_ <= param_.last_cube_s_threshold) {
+        return false;
     }
     return true;
 }

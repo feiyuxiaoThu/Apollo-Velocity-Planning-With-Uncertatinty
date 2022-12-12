@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:54:48
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-11-17 09:26:23
+ * @LastEditTime: 2022-12-12 12:10:56
  * @Description: s-t graph
  */
 
@@ -143,6 +143,7 @@ class StGraph {
         int lateral_segement_number = 10;
         double velocity_max = 6.0;
         double vehicle_head_to_rear_axis = 4.0;
+        double last_cube_s_threshold = 2.0;
     };
 
     /**
