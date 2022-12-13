@@ -249,6 +249,12 @@ void DecisionMaking::SubVehicle::updateMapInformation() {
             is_in_opposite_lane_ = false;
         }
 
+        // Ban the opposite left lane
+        // For temporary test
+        if (map_service.response.is_left_opposite) {
+            left_lane_.disable();
+        }
+
         // 设置道路优先级
         // 确定中间道的优先级
         switch (this->guidance_type_) {
