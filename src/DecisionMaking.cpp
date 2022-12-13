@@ -188,9 +188,17 @@ void DecisionMaking::SubVehicle::chooseStates() {
             // } else {
             //     is_forward_decceleration = false;
             // }
-            
-            // 确定优先级增加量
-            if ((this->is_length_enough_ || (this->guidance_type_ != Lane::GuidanceType::CHANGE_LEFT && this->guidance_type_ != Lane::GuidanceType::CHANGE_RIGHT))) {
+
+            if (is_in_opposite_lane_) {
+                clock_t current_t = clock();
+                double opposite_lane_time_consumption = static_cast<double>((current_t - in_opposite_lane_start_time_)) / CLOCKS_PER_SEC;
+                if (opposite_lane_time_consumption >= 5.0) {
+                    printf("[Subvehicle] opposite lane stay time excesses 5.0 s, return normal lane.\n");
+                    double new_priority = 5.0;
+                    states_set_[StateNames::FORWARD].setPriority(new_priority);
+                }
+
+            } else if ((this->is_length_enough_ || (this->guidance_type_ != Lane::GuidanceType::CHANGE_LEFT && this->guidance_type_ != Lane::GuidanceType::CHANGE_RIGHT))) {
                 // if (!is_forward_decceleration) {
                 //     // 加速不阻碍
                 //     priority_offset = PRIORITY_INCREMENT_VALUE;
@@ -284,11 +292,6 @@ void DecisionMaking::SubVehicle::chooseStates() {
         }
     }
 
-    std::cout << "OVERTAKE PARAMETERS CHANGED" << std::endl;
-    std::cout << "forward state capability is " << this->states_set_[StateNames::FORWARD].getCapability() << ", and safety is " << this->states_set_[StateNames::FORWARD].getSafety() << ", and priority is " << this->states_set_[StateNames::FORWARD].getPriority() << std::endl;
-    std::cout << "left state capability is " << this->states_set_[StateNames::TURN_LEFT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_LEFT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_LEFT].getPriority() << std::endl;
-    std::cout << "right state capability is " << this->states_set_[StateNames::TURN_RIGHT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_RIGHT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_RIGHT].getPriority() << std::endl;
-
     // Adjust the priority due to the previous lane changing process (is in process)
     if (is_lane_changing_) {
         if (lane_changing_state_ == StateNames::UNKNOWN) {
@@ -308,12 +311,20 @@ void DecisionMaking::SubVehicle::chooseStates() {
                     // End the previous lane changing behavior since the forward state has a much larger priority
                     is_lane_changing_ = false;
                     lane_changing_state_ = StateNames::UNKNOWN;
+                } else {
+                    printf("[Subvehicle] in the lane changing process, the adjusted priority for is: %lf.\n", new_priority);
+                    states_set_[lane_changing_state_].setPriority(new_priority);
                 }
-                states_set_[lane_changing_state_].setPriority(new_priority);
+
             }
 
         }
     }
+
+    std::cout << "OVERTAKE PARAMETERS CHANGED" << std::endl;
+    std::cout << "forward state capability is " << this->states_set_[StateNames::FORWARD].getCapability() << ", and safety is " << this->states_set_[StateNames::FORWARD].getSafety() << ", and priority is " << this->states_set_[StateNames::FORWARD].getPriority() << std::endl;
+    std::cout << "left state capability is " << this->states_set_[StateNames::TURN_LEFT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_LEFT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_LEFT].getPriority() << std::endl;
+    std::cout << "right state capability is " << this->states_set_[StateNames::TURN_RIGHT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_RIGHT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_RIGHT].getPriority() << std::endl;
 
     // 构建可选状态列表，包含三大状态
     std::vector<DecisionMaking::StandardState> availiable_states_set;

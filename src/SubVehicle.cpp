@@ -727,12 +727,9 @@ void DecisionMaking::SubVehicle::motionPlanningThread() {
         // Change flag if vehicle decide to change lane in a frame
         if ((choosed_state_.getStateName() == StateNames::TURN_LEFT || choosed_state_.getStateName() == StateNames::TURN_RIGHT) && !is_lane_changing_ ) {
             is_lane_changing_ = true;
-            lane_changing_current_lane_ = center_lane_;
             if (choosed_state_.getStateName() == StateNames::TURN_LEFT) {
-                lane_changing_target_lane_ = left_lane_;
                 lane_changing_state_ = StateNames::TURN_LEFT;
             } else if (choosed_state_.getStateName() == StateNames::TURN_RIGHT) {
-                lane_changing_target_lane_ = right_lane_;
                 lane_changing_state_ = StateNames::TURN_RIGHT;
             } else {
                 assert(false);

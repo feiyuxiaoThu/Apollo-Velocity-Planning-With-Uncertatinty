@@ -436,9 +436,12 @@ class SubVehicle{
 
     // For overtake
     bool is_lane_changing_ = false;
-    Lane lane_changing_current_lane_;
     Lane lane_changing_target_lane_;
     StateNames lane_changing_state_{StateNames::UNKNOWN};
+
+    // Record the time of the vehicle remain in the opposite lane
+    bool is_in_opposite_lane_ = false;
+    clock_t in_opposite_lane_start_time_ = clock();
 };
 
 namespace RSS {

@@ -239,6 +239,16 @@ void DecisionMaking::SubVehicle::updateMapInformation() {
             }
         }
 
+        // Judge whether the vehicle is in the opposite lane
+        if (map_service.response.is_current_pose_opposite) {
+            if (is_in_opposite_lane_ = false) {
+                in_opposite_lane_start_time_ = clock();
+            }
+            is_in_opposite_lane_ = true;
+        } else {
+            is_in_opposite_lane_ = false;
+        }
+
         // 设置道路优先级
         // 确定中间道的优先级
         switch (this->guidance_type_) {
