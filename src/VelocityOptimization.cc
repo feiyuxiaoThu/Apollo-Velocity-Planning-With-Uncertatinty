@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-12 12:24:04
+ * @LastEditTime: 2022-12-13 11:57:18
  * @Description: velocity optimization.
  */
 
@@ -727,16 +727,12 @@ bool VelocityOptimizer::runOnce(const std::vector<std::vector<Cube2D<double>>>& 
         double s_start = cube_paths[i].back().s_start_;
         double s_end = cube_paths[i].back().s_end_;
         double sampling_s_interval = s_available_range / static_cast<double>(s_sampling_number - 1);
-        std::vector<double> sampled_s;
-        while (s_start <= s_end) {
-            sampled_s.emplace_back(s_start);
-            s_start += sampling_s_interval;
-        }
+        std::vector<double> sampled_s = Tools::linspace(s_start, s_end, s_sampling_number);
         std::reverse(sampled_s.begin(), sampled_s.end());
 
         if (static_cast<int>(sampled_s.size()) != s_sampling_number) {
-            printf("[VelocityOptimizer] sampling error! s available range: %lf, s start: %lf, s end: %lf, sampling s interval: %lf, s sampling number: %lf, sampled s size: %d", s_available_range, s_start, s_end, sampling_s_interval, s_sampling_number, static_cast<int>(sampled_s.size()));
-            assert(false);
+            printf("[VelocityOptimizer] sampling error! s available range: %lf, s start: %lf, s end: %lf, sampling s interval: %lf, s sampling number: %d, sampled s size: %d.\n", s_available_range, s_start, s_end, sampling_s_interval, s_sampling_number, static_cast<int>(sampled_s.size()));
+            exit(0);
         }
 
         // Optimization
