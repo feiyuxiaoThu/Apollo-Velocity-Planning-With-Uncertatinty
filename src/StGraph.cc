@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 14:04:49
+ * @LastEditTime: 2022-12-16 17:21:49
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -881,7 +881,7 @@ void UncertaintyStGraph::loadUncertaintyObstacles(const std::vector<DecisionMaki
     }
 }
 
-bool UncertaintyStGraph::enhanceSafety(const std::vector<std::vector<Cube2D<double>>>& initial_cube_paths, std::vector<std::vector<Cube2D<double>>>* enhanced_cube_paths) {
+bool UncertaintyStGraph::enhanceSafety(const std::vector<std::vector<Cube2D<double>>>& initial_cube_paths, std::vector<std::vector<Cube2D<double>>>* enhanced_cube_paths, bool only_vehicle_length) {
 
     assert(!initial_cube_paths.empty());
 
@@ -903,7 +903,7 @@ bool UncertaintyStGraph::enhanceSafety(const std::vector<std::vector<Cube2D<doub
             if (j == 0) {
                 executed_cube_paths[i][j] = enhanced_safety_uncertainty_cube_paths[i][j].initial_cube_;                
             } else {
-                limitUncertaintyCube(&enhanced_safety_uncertainty_cube_paths[i][j]);
+                limitUncertaintyCube(&enhanced_safety_uncertainty_cube_paths[i][j], only_vehicle_length);
                 executed_cube_paths[i][j] = enhanced_safety_uncertainty_cube_paths[i][j].enhanced_cube_;
             }
 
@@ -1007,15 +1007,15 @@ bool UncertaintyStGraph::checkSingleCubesPathContinuity(const std::vector<Cube2D
     return true;
 }
 
-void UncertaintyStGraph::limitUncertaintyCube(UncertaintyCube2D<double>* uncertainty_cube) {
+void UncertaintyStGraph::limitUncertaintyCube(UncertaintyCube2D<double>* uncertainty_cube, bool only_vehicle_length) {
     double t_start = uncertainty_cube->initial_cube_.t_start_;
     double t_end = uncertainty_cube->initial_cube_.t_end_;
     
     // Calculate the limited bounds
     double limited_upper_bound;
     double limited_lower_bound;
-    limitSingleBound(uncertainty_cube->upper_gaussian_dis_, t_start, t_end, BoundType::UPPER, uncertainty_cube->initial_cube_.upper_collision_type_, &limited_upper_bound);
-    limitSingleBound(uncertainty_cube->lower_gaussian_dis_, t_start, t_end, BoundType::LOWER, uncertainty_cube->initial_cube_.lower_collision_type_, &limited_lower_bound);
+    limitSingleBound(uncertainty_cube->upper_gaussian_dis_, t_start, t_end, BoundType::UPPER, uncertainty_cube->initial_cube_.upper_collision_type_, &limited_upper_bound, only_vehicle_length);
+    limitSingleBound(uncertainty_cube->lower_gaussian_dis_, t_start, t_end, BoundType::LOWER, uncertainty_cube->initial_cube_.lower_collision_type_, &limited_lower_bound, only_vehicle_length);
 
     // Update uncertainty cube
     uncertainty_cube->upper_gaussian_dis_.ave_values_(0, 0) = limited_upper_bound;
@@ -1025,7 +1025,7 @@ void UncertaintyStGraph::limitUncertaintyCube(UncertaintyCube2D<double>* uncerta
         
 }
 
-void UncertaintyStGraph::limitSingleBound(const Gaussian1D& line_gaussian_dis, const double& t_start, const double& t_end, const BoundType& bound_type, const CollisionType& collision_type, double* limited_bound) {    
+void UncertaintyStGraph::limitSingleBound(const Gaussian1D& line_gaussian_dis, const double& t_start, const double& t_end, const BoundType& bound_type, const CollisionType& collision_type, double* limited_bound, bool only_vehicle_length) {    
     // Initialize buffer value
     double buffer_value = 0.0;
 
@@ -1035,92 +1035,103 @@ void UncertaintyStGraph::limitSingleBound(const Gaussian1D& line_gaussian_dis, c
         return;
     }
 
-    // Traverse all the uncertainty occupied areas
-    for (const auto& cur_uncertainty_occ_area : uncertainty_occupied_areas_) {
+    if (only_vehicle_length) {
+        buffer_value = param_.vehicle_head_to_rear_axis;
+    } else {
+        // Traverse all the uncertainty occupied areas
+        for (const auto& cur_uncertainty_occ_area : uncertainty_occupied_areas_) {
 
-        // // DEBUG
-        // std::cout << "#################################################" << std::endl;
-        // std::cout << "covariance: " << std::endl;
-        // std::cout << cur_uncertainty_occ_area.gaussian_dis_.covariance_ << std::endl;
-        // std::cout << "#################################################" << std::endl;
-        // // END DEBUG
+            // // DEBUG
+            // std::cout << "#################################################" << std::endl;
+            // std::cout << "covariance: " << std::endl;
+            // std::cout << cur_uncertainty_occ_area.gaussian_dis_.covariance_ << std::endl;
+            // std::cout << "#################################################" << std::endl;
+            // // END DEBUG
 
-        // Calculate relative positions 
-        double cur_nearest_t_in_line = 0.0;
-        Eigen::Vector2d cur_nearest_vertice_in_polynomial;
-        SRelativePositionType rel_pos_type = SRelativePositionType::UNKNOWN;
-        TRelativePositionType t_rel_pos_type = TRelativePositionType::UNKNOWN;
-        bool cur_state = ShapeUtils::judgeLineWithPolynomial(line_gaussian_dis.ave_values_(0, 0), t_start, t_end, cur_uncertainty_occ_area.vertex_, param_.s_resolution, &cur_nearest_t_in_line, cur_nearest_vertice_in_polynomial, &rel_pos_type, &t_rel_pos_type);
-        
-        if (!cur_state) {
-            printf("[UncertaintyStGraph] Error collision!!!\n");
-            assert(false);
+            // Calculate relative positions 
+            double cur_nearest_t_in_line = 0.0;
+            Eigen::Vector2d cur_nearest_vertice_in_polynomial;
+            SRelativePositionType rel_pos_type = SRelativePositionType::UNKNOWN;
+            TRelativePositionType t_rel_pos_type = TRelativePositionType::UNKNOWN;
+            bool cur_state = ShapeUtils::judgeLineWithPolynomial(line_gaussian_dis.ave_values_(0, 0), t_start, t_end, cur_uncertainty_occ_area.vertex_, param_.s_resolution, &cur_nearest_t_in_line, cur_nearest_vertice_in_polynomial, &rel_pos_type, &t_rel_pos_type);
+            
+            if (!cur_state) {
+                printf("[UncertaintyStGraph] Error collision!!!\n");
+                assert(false);
+            }
+
+            // if (t_rel_pos_type != TRelativePositionType::OVERLAPPED) {
+            //     continue;
+            // }
+
+            // Transform the gaussian distribution from an uncertainty area to a specific point
+            Gaussian2D nearest_point_gaussian_dis = cur_uncertainty_occ_area.toPointGaussianDis(cur_nearest_vertice_in_polynomial);
+
+            // Calulate location probability given a dimension and its range
+            double dis_prob = GaussianUtils::calculateDistributionProbability(nearest_point_gaussian_dis, DimensionType::T, t_start, t_end);
+            double current_required_confidence = 1.0 - (1.0 - uncertainty_param_.required_confidence) / dis_prob;
+
+            // LOG(INFO) << "covariance(0, 0): " << nearest_point_gaussian_dis.covariance_(0, 0) << ", covariance(1, 1): " << nearest_point_gaussian_dis.covariance_(1, 1);
+            // LOG(INFO) << "distributed probability: " << dis_prob;
+            // LOG(INFO) << "current required confidence: " << current_required_confidence;
+
+            // Get the two possible distribution of the 2D distribution
+            Gaussian1D start_gaussian_dis;
+            Gaussian1D end_gaussian_dis;
+            GaussianUtils::transformGaussian2DTo1D(nearest_point_gaussian_dis, DimensionType::S, t_start, t_end, &start_gaussian_dis, &end_gaussian_dis);
+
+            // Calculate difference gaussian distribution due to the type of bound
+            Gaussian1D start_diff_gaussian_dis;
+            Gaussian1D end_diff_gaussian_dis;
+            if (bound_type == BoundType::UPPER) {
+                start_diff_gaussian_dis = start_gaussian_dis - line_gaussian_dis;
+                end_diff_gaussian_dis = end_gaussian_dis - line_gaussian_dis;
+            } else if (bound_type == BoundType::LOWER) {
+                start_diff_gaussian_dis = line_gaussian_dis - start_gaussian_dis;
+                end_diff_gaussian_dis = line_gaussian_dis - end_gaussian_dis;
+            } else {
+                printf("[UncertaintyStGraph] Unknown bound type!!!\n");
+                assert(false);
+            }
+
+            if (start_diff_gaussian_dis.ave_values_(0, 0) < 0.0 || end_diff_gaussian_dis.ave_values_(0, 0) < 0.0) {
+                // TODO: check this logic, it is likely that there is a bug
+                printf("[UncertaintyStGraph] Emergence situation!!!\n");
+                LOG(INFO) << "[UncertaintyStGraph] Emergence situation!!!";
+            }
+            double start_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(start_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
+            double end_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(end_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
+
+            // LOG(INFO) << "start diff gaussian covariance: " << start_diff_gaussian_dis.covariance_(0, 0);
+            // LOG(INFO) << "start diff gaussian res buffer: " << start_diff_gaussian_res_buffer;
+            // LOG(INFO) << "end diff gaussian covariance: " << end_diff_gaussian_dis.covariance_(0, 0);
+            // LOG(INFO) << "end diff gaussian res buffer: " << end_diff_gaussian_res_buffer;
+
+            // Chance constarint buffer
+            if ((rel_pos_type == SRelativePositionType::ABOVE && bound_type == BoundType::UPPER) || (rel_pos_type == SRelativePositionType::BELOW && bound_type == BoundType::LOWER)) {
+                buffer_value = std::max({buffer_value, start_diff_gaussian_res_buffer, end_diff_gaussian_res_buffer});
+            }
+
+            // Vehicle length
+            if (rel_pos_type == SRelativePositionType::ABOVE && bound_type == BoundType::UPPER) {
+                buffer_value += param_.vehicle_head_to_rear_axis;
+            }
+
+            // // DEBUG
+            // std::cout << "++++++++++++++++++++++++++++++++++++" << std::endl;
+            // std::cout << "t start: " << t_start << ", t end: " << t_end << std::endl;
+            // std::cout << "Bound type: " << bound_type << std::endl;
+            // std::cout << "Neareat point gaussian dis average value: " << nearest_point_gaussian_dis.ave_values_ << std::endl;
+            // std::cout << "Nearest point gaussian dis variance: " << nearest_point_gaussian_dis.covariance_ << std::endl;
+            // std::cout << "Distribution probability: " << dis_prob << std::endl;
+            // std::cout << "Required confidence: " << current_required_confidence << std::endl;
+            // std::cout << "Start diff gaussian buffer: " << start_diff_gaussian_res_buffer << std::endl;
+            // std::cout << "End diff gaussian buffer: " << end_diff_gaussian_res_buffer << std::endl;
+            // // END DEBUG
+
+
         }
-
-        // if (t_rel_pos_type != TRelativePositionType::OVERLAPPED) {
-        //     continue;
-        // }
-
-        // Transform the gaussian distribution from an uncertainty area to a specific point
-        Gaussian2D nearest_point_gaussian_dis = cur_uncertainty_occ_area.toPointGaussianDis(cur_nearest_vertice_in_polynomial);
-
-        // Calulate location probability given a dimension and its range
-        double dis_prob = GaussianUtils::calculateDistributionProbability(nearest_point_gaussian_dis, DimensionType::T, t_start, t_end);
-        double current_required_confidence = 1.0 - (1.0 - uncertainty_param_.required_confidence) / dis_prob;
-
-        // Get the two possible distribution of the 2D distribution
-        Gaussian1D start_gaussian_dis;
-        Gaussian1D end_gaussian_dis;
-        GaussianUtils::transformGaussian2DTo1D(nearest_point_gaussian_dis, DimensionType::S, t_start, t_end, &start_gaussian_dis, &end_gaussian_dis);
-
-        // Calculate difference gaussian distribution due to the type of bound
-        Gaussian1D start_diff_gaussian_dis;
-        Gaussian1D end_diff_gaussian_dis;
-        if (bound_type == BoundType::UPPER) {
-            start_diff_gaussian_dis = start_gaussian_dis - line_gaussian_dis;
-            end_diff_gaussian_dis = end_gaussian_dis - line_gaussian_dis;
-        } else if (bound_type == BoundType::LOWER) {
-            start_diff_gaussian_dis = line_gaussian_dis - start_gaussian_dis;
-            end_diff_gaussian_dis = line_gaussian_dis - end_gaussian_dis;
-        } else {
-            printf("[UncertaintyStGraph] Unknown bound type!!!\n");
-            assert(false);
-        }
-
-        if (start_diff_gaussian_dis.ave_values_(0, 0) < 0.0 || end_diff_gaussian_dis.ave_values_(0, 0) < 0.0) {
-            // TODO: check this logic, it is likely that there is a bug
-            printf("[UncertaintyStGraph] Emergence situation!!!\n");
-            LOG(INFO) << "[UncertaintyStGraph] Emergence situation!!!";
-        }
-        double start_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(start_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
-        double end_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(end_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
-
-        // Chance constarint buffer
-        if ((rel_pos_type == SRelativePositionType::ABOVE && bound_type == BoundType::UPPER) || (rel_pos_type == SRelativePositionType::BELOW && bound_type == BoundType::LOWER)) {
-            buffer_value = std::max({buffer_value, start_diff_gaussian_res_buffer, end_diff_gaussian_res_buffer});
-        }
-
-        // Vehicle length
-        if (rel_pos_type == SRelativePositionType::ABOVE && bound_type == BoundType::UPPER) {
-            buffer_value += param_.vehicle_head_to_rear_axis;
-        }
-
-        // // DEBUG
-        // std::cout << "++++++++++++++++++++++++++++++++++++" << std::endl;
-        // std::cout << "t start: " << t_start << ", t end: " << t_end << std::endl;
-        // std::cout << "Bound type: " << bound_type << std::endl;
-        // std::cout << "Neareat point gaussian dis average value: " << nearest_point_gaussian_dis.ave_values_ << std::endl;
-        // std::cout << "Nearest point gaussian dis variance: " << nearest_point_gaussian_dis.covariance_ << std::endl;
-        // std::cout << "Distribution probability: " << dis_prob << std::endl;
-        // std::cout << "Required confidence: " << current_required_confidence << std::endl;
-        // std::cout << "Start diff gaussian buffer: " << start_diff_gaussian_res_buffer << std::endl;
-        // std::cout << "End diff gaussian buffer: " << end_diff_gaussian_res_buffer << std::endl;
-        // // END DEBUG
-
-
     }
-
-
 
     // Calculate the limited cube bound's position
     if (bound_type == BoundType::UPPER) {

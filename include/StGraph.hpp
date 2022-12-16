@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:54:48
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 14:14:11
+ * @LastEditTime: 2022-12-16 17:13:25
  * @Description: s-t graph
  */
 
@@ -256,7 +256,7 @@ class UncertaintyStGraph : public StGraph {
 
     void loadUncertaintyObstacles(const std::vector<DecisionMaking::Obstacle>& uncertainty_obstacles);
 
-    bool enhanceSafety(const std::vector<std::vector<Cube2D<double>>>& initial_cube_paths, std::vector<std::vector<Cube2D<double>>>* enhanced_cube_paths);
+    bool enhanceSafety(const std::vector<std::vector<Cube2D<double>>>& initial_cube_paths, std::vector<std::vector<Cube2D<double>>>* enhanced_cube_paths, bool only_vehicle_length);
 
     std::vector<UncertaintyCube2D<double>> transformCubesPathToUncertaintyCubesPath(const std::vector<Cube2D<double>>& cubes);
 
@@ -268,13 +268,13 @@ class UncertaintyStGraph : public StGraph {
      * @description: limit the cube's upper and lower bounds due to the confidence and uncertainty 
      * @return is successful
      */    
-    void limitUncertaintyCube(UncertaintyCube2D<double>* uncertainty_cube);
+    void limitUncertaintyCube(UncertaintyCube2D<double>* uncertainty_cube, bool only_vehicle_length);
 
     /**
      * @description: limit the single bounds for each cube
      * @return {*}
      */    
-    void limitSingleBound(const Gaussian1D& line_gaussian_dis, const double& t_start, const double& t_end, const BoundType& bound_type, const CollisionType& collision_type, double* limited_bound);
+    void limitSingleBound(const Gaussian1D& line_gaussian_dis, const double& t_start, const double& t_end, const BoundType& bound_type, const CollisionType& collision_type, double* limited_bound, bool only_vehicle_length);
 
     std::vector<UncertaintyOccupiedArea> uncertainty_occupied_areas_;
 

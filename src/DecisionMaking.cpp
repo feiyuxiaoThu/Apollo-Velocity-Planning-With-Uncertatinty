@@ -218,7 +218,7 @@ void DecisionMaking::SubVehicle::chooseStates() {
                 double new_priority = states_set_[StateNames::FORWARD].s_.back();
                 
                 // LOG(INFO) << "中间道路优先级进行调整，原来为" << this->states_set_[StateNames::FORWARD].getPriority() << "增量为" << new_priority;
-                this->states_set_[StateNames::FORWARD].setPriority(new_priority + 5.0 * (current_vehicle_movement_.velocity_ / 13.0) + 2.0);
+                this->states_set_[StateNames::FORWARD].setPriority(new_priority + 5.0 * (current_vehicle_movement_.velocity_ / 13.0) + 2.1);
             }
             // // 加速度偏移量
             // double acceleration_priority_offset = this->states_set_[StateNames::FORWARD].getVehicleDynamicPlanningExpectedAcceleration() * 40.0;
@@ -251,7 +251,7 @@ void DecisionMaking::SubVehicle::chooseStates() {
                  
                 // LOG(INFO) << "左侧道路优先级进行调整，原来为" << this->states_set_[StateNames::TURN_LEFT].getPriority() << "增量为" << priority_offset;
                 double new_priority = states_set_[StateNames::TURN_LEFT].s_.back();
-                this->states_set_[StateNames::TURN_LEFT].setPriority(new_priority);
+                this->states_set_[StateNames::TURN_LEFT].setPriority(new_priority + 0.1);
             }
             // // 加速度偏移量
             // double acceleration_priority_offset = this->states_set_[StateNames::TURN_LEFT].getVehicleDynamicPlanningExpectedAcceleration() * 40.0;

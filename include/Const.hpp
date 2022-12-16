@@ -64,8 +64,8 @@
 #define MOTION_PLANNING_FREQUENCY 20  // 运动规划的频率
 
 // MotionPlanning.cpp中的常量
-#define NAVIGATION_LENGTH_ENOUGH_MIN_VALUE 100.0  // 如果全局导航小于100.0,则全局导航长度不足以进行超车
-#define NAVIGATION_LENGTH_ENOUGH_MIN_COEF 20.0  // 如果全局导航小于速度上限*20.0,则全局导航长度不足以进行超车
+#define NAVIGATION_LENGTH_ENOUGH_MIN_VALUE 50.0  // 如果全局导航小于100.0,则全局导航长度不足以进行超车
+#define NAVIGATION_LENGTH_ENOUGH_MIN_COEF 10.0  // 如果全局导航小于速度上限*20.0,则全局导航长度不足以进行超车
 #define LOCAL_PLANNING_LONGITUDE_SAMPLE_COEF 0.3  // 局部规划纵向采样系数
 #define LOCAL_PLANNING_LONGITUDE_SAMPLE_MIN_LENGTH 5.0  // 局部规划纵向采样最短规划距离[m]
 #define MIN_VELOCITY_FOR_ACCEPTABLE_CURVATURE_CALCULATION 1.0  // 用于计算可接受曲率的最小速度

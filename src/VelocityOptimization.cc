@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 11:09:30
+ * @LastEditTime: 2022-12-16 17:18:24
  * @Description: velocity optimization.
  */
 
@@ -1386,7 +1386,13 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
 
     // ~Stage II: safety enhancement
     std::vector<std::vector<Cube2D<double>>> enhanced_cube_paths;
-    bool enhancement_success = st_graph_->enhanceSafety(cube_paths, &enhanced_cube_paths);
+    bool only_vehicle_length = false;
+    if (planning_state_->getStateName() != DecisionMaking::StateNames::FORWARD) {
+        only_vehicle_length = true;
+    } else {
+        only_vehicle_length = false;
+    }
+    bool enhancement_success = st_graph_->enhanceSafety(cube_paths, &enhanced_cube_paths, only_vehicle_length);
     if (!enhancement_success) {
         planning_state_->setSafety(false);
         planning_state_->velocity_profile_generation_state_ = false;
@@ -1394,6 +1400,7 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
         LOG(INFO) << "[VelocityPlanner] " << DIC_STATE_NAME[planning_state_->getStateName()].c_str() << " is not safe due to safety enhancement failure.";
         return false;
     }
+
 
     // // DEBUG
     // st_graph_->visualization();
