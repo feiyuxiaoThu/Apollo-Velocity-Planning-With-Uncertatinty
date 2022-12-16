@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:54:48
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-12 12:10:56
+ * @LastEditTime: 2022-12-16 10:03:00
  * @Description: s-t graph
  */
 
@@ -49,6 +49,11 @@ class Cube2D {
 
     void print() {
         std::cout << "[Cube2D] "<< "t start: " << t_start_ << ", t end: " << t_end_ << ", s start: " << s_start_ << ", s end: " << s_end_ << std::endl; 
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Cube2D<T>& cube) {
+        os << "[Cube2D] "<< "t start: " << cube.t_start_ << ", t end: " << cube.t_end_ << ", s start: " << cube.s_start_ << ", s end: " << cube.s_end_;
+        return os;
     }
 
     T t_start_;

@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-13 11:57:18
+ * @LastEditTime: 2022-12-16 10:10:38
  * @Description: velocity optimization.
  */
 
@@ -903,6 +903,8 @@ void VelocityOptimizer::runSingleCubesPath(const std::vector<Cube2D<double>>& cu
 
     printf("[VelocityOptimizer] End s: %lf.\n", end_s);
     printf("[VelocityOptimizer] Optimization result: %d.\n", optimization_res);
+    LOG(INFO) << "[VelocityOptimizer] End s: " << end_s << ".";
+    LOG(INFO) << "[VelocityOptimizer] Optimization result: " << optimization_res << ".";
 
     ss_[index] = optimized_s;
     tt_[index] = ref_stamps;
@@ -1297,6 +1299,7 @@ VelocityPlanner::VelocityPlanner(DecisionMaking::StandardState* current_state) {
             // // END DEBUG 
 
             printf("[VelocityPlanner] Planning from the point in the previous trajectory with v: %lf, a: %lf.\n", planning_state_->v_[lower_index], planning_state_->a_[lower_index]);
+            LOG(INFO) << "[VelocityPlanner] Planning from the point in the previous trajectory with v: " << planning_state_->v_[lower_index] << ", a: " << planning_state_->a_[lower_index] << ".";
 
             start_state_ = {0.0, planning_state_->v_[lower_index], planning_state_->a_[lower_index]};
             // Construct s-t graph
@@ -1321,6 +1324,7 @@ VelocityPlanner::VelocityPlanner(DecisionMaking::StandardState* current_state) {
         // // END DEBUG 
 
         printf("[VelocityPlanner] Planning from current state with v: %lf, a: %lf.\n", vehicle_movement_state.velocity_, vehicle_movement_state.acceleration_);
+        LOG(INFO) << "[VelocityPlanner] Planning from current state with v: " << vehicle_movement_state.velocity_ << ", a: " << vehicle_movement_state.acceleration_ << ".";
 
         // Test limit the acceleration
         // Acceleration information from the IMU may include noise
@@ -1408,6 +1412,8 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
 
     printf("[VelocityPlanner] Planned state name: %s.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
     printf("[VelocityPlanner] Velocity range: %lf -- %lf, acceleration range: %lf -- %lf.\n", max_speed, min_speed, max_acc, min_acc);
+    LOG(INFO) << "[VelocityPlanner] Planned state name: " << DIC_STATE_NAME[planning_state_->getStateName()].c_str() << ".";
+    LOG(INFO) << "[VelocityPlanner] Velocity range: " << max_speed << " -- " << min_speed << ", acceleration range: " << max_acc << " -- " << min_acc << ".";
 
     int final_s_sampled_num = 0;
     if (planning_state_->getStateName() == DecisionMaking::StateNames::FORWARD) {
@@ -1431,12 +1437,16 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
         // std::cout << "Final selected s: " << s.back() << std::endl;
         printf("[VelocityPlanner] %s velocity profile generation success.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
         printf("[VelocityPlanner] Final selected s: %lf, average velocity: %lf.\n", s.back(), s.back() / st_graph_->param_.t_max);
+        LOG(INFO) << "[VelocityPlanner] " << DIC_STATE_NAME[planning_state_->getStateName()].c_str() << " velocity profile generation success.";
+        LOG(INFO) << "[VelocityPlanner] " << "Final selected s: " << s.back() << ", average velocity: " << s.back() / st_graph_->param_.t_max << ".";
     } 
 
     if (!optimization_success) {
         planning_state_->setSafety(false);
         planning_state_->velocity_profile_generation_state_ = false;
-        std::cout << "State name: " << planning_state_->getStateName() << " is not safe due to optimization failure." << std::endl;
+        printf("[VelocityPlanner] %s is not safe due to optimization failure.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
+        LOG(INFO) << "[VelocityPlanner] " << DIC_STATE_NAME[planning_state_->getStateName()].c_str() << " is not safe due to optimization failure.";
+
         return false;
     }
 

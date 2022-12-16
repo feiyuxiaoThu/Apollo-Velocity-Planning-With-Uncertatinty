@@ -82,7 +82,8 @@ void DecisionMaking::SubVehicle::checkStates() {
 
     clock_t end_time = clock();
     double time_consumption = static_cast<double>((end_time - start_time)) / CLOCKS_PER_SEC;
-    std::cout << "Time consumption: " << time_consumption << std::endl;
+    printf("[SubVehicle] Velocity planning time consumption: %lf.\n", time_consumption);
+    LOG(INFO) << "[SubVehicle] Velocity planning time consumption: " << time_consumption << ".";
 
     // // Calculate velocity for the states, whose velocity profile generation is failed
     // if (!(&(states_set_[StateNames::FORWARD]))->velocity_profile_generation_state_) {
@@ -194,6 +195,7 @@ void DecisionMaking::SubVehicle::chooseStates() {
                 double opposite_lane_time_consumption = static_cast<double>((current_t - in_opposite_lane_start_time_)) / CLOCKS_PER_SEC;
                 if (opposite_lane_time_consumption >= 5.0) {
                     printf("[Subvehicle] opposite lane stay time excesses 5.0 s, return normal lane.\n");
+                    LOG(INFO) << "[Subvehicle] opposite lane stay time excesses 5.0 s, return normal lane.";
                     double new_priority = 5.0;
                     states_set_[StateNames::FORWARD].setPriority(new_priority);
                 }
@@ -298,21 +300,28 @@ void DecisionMaking::SubVehicle::chooseStates() {
             // Flags error, reset flags
             is_lane_changing_ = false;
             lane_changing_state_ = StateNames::UNKNOWN;
+            printf("[SubVehicle] Unknown error, unknown previous lane changing state.\n");
+            LOG(INFO) << "[SubVehicle] Unknown error, unknown previous lane changing state.";
         } else {
             // Check the safety and priority of the previous lane changing state
             if (!states_set_[lane_changing_state_].getCapability() || !states_set_[lane_changing_state_].getSafety()) {
                 // End the previous lane changing behavior
                 is_lane_changing_ = false;
                 lane_changing_state_ = StateNames::UNKNOWN;
+                printf("[SubVehicle] Previous is unsafe or disable, being forced to give up.\n");
+                LOG(INFO) << "[SubVehicle] Previous is unsafe or disable, being forced to give up.";
             } else {
                 // Reset the priority to held the previous lane changing process
                 double new_priority = states_set_[lane_changing_state_].getPriority() + 20.0;
                 if (new_priority < states_set_[StateNames::FORWARD].getPriority()) {
                     // End the previous lane changing behavior since the forward state has a much larger priority
+                    printf("[SubVehicle] Giving up the previous lane changing process, FORWARD priority: %lf, previous lane changing priority: %lf.\n", states_set_[StateNames::FORWARD].getPriority(), new_priority);
+                    LOG(INFO) << "[SubVehicle] Giving up the previous lane changing process, FORWARD priority: " << states_set_[StateNames::FORWARD].getPriority() << ", previous lane changing priority: " << new_priority << ".";
                     is_lane_changing_ = false;
                     lane_changing_state_ = StateNames::UNKNOWN;
                 } else {
-                    printf("[Subvehicle] in the lane changing process, the adjusted priority for is: %lf.\n", new_priority);
+                    printf("[Subvehicle] In the lane changing process, the adjusted priority for is: %lf.\n", new_priority);
+                    LOG(INFO) << "[Subvehicle] In the lane changing process, the adjusted priority for is: " << new_priority << ".";
                     states_set_[lane_changing_state_].setPriority(new_priority);
                 }
 
@@ -325,6 +334,11 @@ void DecisionMaking::SubVehicle::chooseStates() {
     std::cout << "forward state capability is " << this->states_set_[StateNames::FORWARD].getCapability() << ", and safety is " << this->states_set_[StateNames::FORWARD].getSafety() << ", and priority is " << this->states_set_[StateNames::FORWARD].getPriority() << std::endl;
     std::cout << "left state capability is " << this->states_set_[StateNames::TURN_LEFT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_LEFT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_LEFT].getPriority() << std::endl;
     std::cout << "right state capability is " << this->states_set_[StateNames::TURN_RIGHT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_RIGHT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_RIGHT].getPriority() << std::endl;
+
+    LOG(INFO) << "OVERTAKE PARAMETERS CHANGED";
+    LOG(INFO) << "forward state capability is " << this->states_set_[StateNames::FORWARD].getCapability() << ", and safety is " << this->states_set_[StateNames::FORWARD].getSafety() << ", and priority is " << this->states_set_[StateNames::FORWARD].getPriority();
+    LOG(INFO) << "left state capability is " << this->states_set_[StateNames::TURN_LEFT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_LEFT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_LEFT].getPriority();
+    LOG(INFO) << "right state capability is " << this->states_set_[StateNames::TURN_RIGHT].getCapability() << ", and safety is " << this->states_set_[StateNames::TURN_RIGHT].getSafety() << ", and priority is " << this->states_set_[StateNames::TURN_RIGHT].getPriority();
 
     // 构建可选状态列表，包含三大状态
     std::vector<DecisionMaking::StandardState> availiable_states_set;

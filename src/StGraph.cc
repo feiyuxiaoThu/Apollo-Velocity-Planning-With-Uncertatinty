@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-12 12:10:35
+ * @LastEditTime: 2022-12-16 09:40:36
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -657,9 +657,12 @@ bool StGraph::connectCubes(const std::vector<std::vector<Cube2D<double>>>& input
 
         for (int i = 0; i < connected_cubes_.size(); i++) {
             printf("[StGraph] Path index: %d.\n", i);
+            LOG(INFO) << "[StGraph] Path index: " << i << ".";
             for (int j = 0; j < connected_cubes_[i].size(); j++) {
                 printf("[StGraph] Cube index: %d, with information: ", j);
+                LOG(INFO) << "[StGraph] Cube index: " << j <<", with information: ";
                 connected_cubes_[i][j].print();
+                LOG(INFO) << connected_cubes_[i][j];
             }
         }
 
@@ -928,9 +931,12 @@ bool UncertaintyStGraph::enhanceSafety(const std::vector<std::vector<Cube2D<doub
     std::cout << "+++++++++++++++++++++++++++++++++ Enhanced safety cubes information +++++++++++++++++++++++++++++++++" << std::endl;
     for (int i = 0; i < executed_cube_paths.size(); i++) {
         printf("[UncertaintyStGraph] Path index: %d.\n", i);
+        LOG(INFO) << "[UncertaintyStGraph] Path index: " << i << ".";
         for (int j = 0; j < executed_cube_paths[i].size(); j++) {
             printf("[UncertaintyStGraph] Cube index: %d, with information: ", j);
+            LOG(INFO) << "[UncertaintyStGraph] Cube index: " << j << ", with information: ";
             executed_cube_paths[i][j].print();
+            LOG(INFO) << executed_cube_paths[i][j];
         }
     }
 
@@ -1084,6 +1090,7 @@ void UncertaintyStGraph::limitSingleBound(const Gaussian1D& line_gaussian_dis, c
         if (start_diff_gaussian_dis.ave_values_(0, 0) < 0.0 || end_diff_gaussian_dis.ave_values_(0, 0) < 0.0) {
             // TODO: check this logic, it is likely that there is a bug
             printf("[UncertaintyStGraph] Emergence situation!!!\n");
+            LOG(INFO) << "[UncertaintyStGraph] Emergence situation!!!";
         }
         double start_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(start_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
         double end_diff_gaussian_res_buffer = LookUpTable::GaussianAverageValue::calculate(end_diff_gaussian_dis.covariance_(0, 0), current_required_confidence);
