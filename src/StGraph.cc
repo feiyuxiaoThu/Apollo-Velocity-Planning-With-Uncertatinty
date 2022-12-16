@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 09:40:36
+ * @LastEditTime: 2022-12-16 14:04:49
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -1128,7 +1128,7 @@ void UncertaintyStGraph::limitSingleBound(const Gaussian1D& line_gaussian_dis, c
     } else if (bound_type == BoundType::LOWER) {
         *limited_bound = line_gaussian_dis.ave_values_(0, 0) + buffer_value;
     } else {
-        printf("[UncertaintyStGraph] unknown bound type!!!\n");
+        printf("[UncertaintyStGraph] Unknown bound type!!!\n");
         assert(false);
     }
     

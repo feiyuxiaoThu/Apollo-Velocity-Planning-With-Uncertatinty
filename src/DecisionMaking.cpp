@@ -308,8 +308,8 @@ void DecisionMaking::SubVehicle::chooseStates() {
                 // End the previous lane changing behavior
                 is_lane_changing_ = false;
                 lane_changing_state_ = StateNames::UNKNOWN;
-                printf("[SubVehicle] Previous is unsafe or disable, being forced to give up.\n");
-                LOG(INFO) << "[SubVehicle] Previous is unsafe or disable, being forced to give up.";
+                printf("[SubVehicle] Previous lane changing state is unsafe or disable, being forced to give up.\n");
+                LOG(INFO) << "[SubVehicle] Previous lane changing state is unsafe or disable, being forced to give up.";
             } else {
                 // Reset the priority to held the previous lane changing process
                 double new_priority = states_set_[lane_changing_state_].getPriority() + 20.0;

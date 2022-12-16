@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:54:48
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 10:03:00
+ * @LastEditTime: 2022-12-16 14:12:21
  * @Description: s-t graph
  */
 
@@ -52,7 +52,7 @@ class Cube2D {
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Cube2D<T>& cube) {
-        os << "[Cube2D] "<< "t start: " << cube.t_start_ << ", t end: " << cube.t_end_ << ", s start: " << cube.s_start_ << ", s end: " << cube.s_end_;
+        os << "[Cube2D] "<< "t start: " << cube.t_start_ << ", t end: " << cube.t_end_ << ", s start: " << cube.s_start_ << ", s end: " << cube.s_end_ << ", upper collision type: " << cube.upper_collision_type_ << ", lower collision type: " << cube.lower_collision_type_;
         return os;
     }
 
