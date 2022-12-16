@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-04 14:14:24
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 10:10:38
+ * @LastEditTime: 2022-12-16 10:57:15
  * @Description: velocity optimization.
  */
 
@@ -1379,7 +1379,8 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     if (!graph_success) {
         planning_state_->setSafety(false);
         planning_state_->velocity_profile_generation_state_ = false;
-        std::cout << "State name: " << planning_state_->getStateName() << " is not safe due to graph failure." << std::endl;
+        printf("[VelocityPlanner] %s is not safe due to graph failure.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
+        LOG(INFO) << "[VelocityPlanner] " << DIC_STATE_NAME[planning_state_->getStateName()].c_str() << " is not safe due to graph failure.";
         return false;
     }
 
@@ -1389,7 +1390,8 @@ bool VelocityPlanner::runOnce(const std::vector<DecisionMaking::Obstacle>& obsta
     if (!enhancement_success) {
         planning_state_->setSafety(false);
         planning_state_->velocity_profile_generation_state_ = false;
-        std::cout << "State name: " << planning_state_->getStateName() << " is not safe due to safety enhancement failure." << std::endl;
+        printf("[VelocityPlanner] %s is not safe due to safety enhancement failure.\n", DIC_STATE_NAME[planning_state_->getStateName()].c_str());
+        LOG(INFO) << "[VelocityPlanner] " << DIC_STATE_NAME[planning_state_->getStateName()].c_str() << " is not safe due to safety enhancement failure.";
         return false;
     }
 
