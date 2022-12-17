@@ -462,7 +462,7 @@ visualization_msgs::Marker VisualizationMethods::visualizeObstacleVelocity(const
     color.b = 1;
     color.a = 1;
     std::stringstream ss;
-    ss << "velocity: " << obstacle.getObstacleVelocity() << std::endl;
+    ss << "id: " << obstacle.getID() << ", velocity: " << obstacle.getObstacleVelocity() << std::endl;
     return visualizeStringToMarker(ss.str(), obstacle.getObstaclePosition().x_, obstacle.getObstaclePosition().y_, color, id);
 }
 

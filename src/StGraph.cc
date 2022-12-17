@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:59:29
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 17:21:49
+ * @LastEditTime: 2022-12-17 17:54:24
  * @Description: s-t graph for velocity planning.
  */
 #include "Common.hpp"
@@ -400,6 +400,8 @@ std::vector<std::tuple<std::vector<Eigen::Vector2d>, double, double>> StGraph::l
 
         // Record
         real_vertex_and_interaction_theta.emplace_back(std::make_tuple(real_vertice, ego_vehicle_interaction_theta, obstacle_interaction_theta));
+
+        LOG(INFO) << "[StGraph] Obstacle id: " << obstacle.getID() << ", predicted trajectory index: " << i << ", collision with the path, with four vertex: (0) {" << real_vertice[0](0) << ", " << real_vertice[0](1) << "}, (1) {" << real_vertice[1](0) << ", " << real_vertice[1](1) <<  "}, (2) {" << real_vertice[2](0) << ", " << real_vertice[2](1) << "}, (3) {" << real_vertice[3](0) << ", " << real_vertice[3](1) << "}.";
 
         // // DEBUG
         // for (int i = 0; i < 4; i++) {
