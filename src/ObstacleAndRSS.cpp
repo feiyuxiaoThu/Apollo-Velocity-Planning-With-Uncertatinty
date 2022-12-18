@@ -561,8 +561,8 @@ DecisionMaking::RSS::OccupationArea::OccupationArea(const Obstacle &obstacle, si
                 Rectangle rectangle = Rectangle();
                 rectangle.center_x_ = obstacle.getPredictedTrajectory(lane_index)[i].position_.x_;
                 rectangle.center_y_ = obstacle.getPredictedTrajectory(lane_index)[i].position_.y_;
-                rectangle.width_ = obstacle.getObstacleOccupationWidth();
-                rectangle.length_ = obstacle.getObstacleLength() + DYNAMIC_OBSTACLE_EXPAND_LENGTH_AS_OCCUPANCY;
+                rectangle.width_ = obstacle.getObstacleOccupationWidth() + 0.1;
+                rectangle.length_ = obstacle.getObstacleLength() + 0.1;
                 rectangle.rotation_ = obstacle.getPredictedTrajectory(lane_index)[i].theta_;
                 this->occupation_area_[i] = rectangle;
             }

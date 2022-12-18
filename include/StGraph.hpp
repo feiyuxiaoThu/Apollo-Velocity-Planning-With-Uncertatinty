@@ -2,7 +2,7 @@
  * @Author: fujiawei0724
  * @Date: 2022-08-03 15:54:48
  * @LastEditors: fujiawei0724
- * @LastEditTime: 2022-12-16 17:13:25
+ * @LastEditTime: 2022-12-18 10:25:53
  * @Description: s-t graph
  */
 
@@ -219,7 +219,7 @@ class UncertaintyOccupiedArea {
 
     UncertaintyOccupiedArea();
 
-    UncertaintyOccupiedArea(const std::vector<Eigen::Vector2d>& vertex, const Gaussian2D& gaussian_dis);
+    UncertaintyOccupiedArea(const std::vector<Eigen::Vector2d>& vertex, const Gaussian2D& gaussian_dis, const double& obstacle_velocity);
 
     ~UncertaintyOccupiedArea();
 
@@ -228,6 +228,7 @@ class UncertaintyOccupiedArea {
     Parallelogram vertex_;
     // The average value is valid since an area includes many pixel points
     Gaussian2D gaussian_dis_;
+    double obstacle_velocity_{0.0};
 };
 
 
